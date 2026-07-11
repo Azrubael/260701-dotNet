@@ -1,0 +1,16 @@
+{
+	"dotnet.defaultSolution": "hello_c#.slnx",
+	"workbench.colorCustomizations": {
+	"editor.background": "#ffffe9",   // light yellow
+	"sideBar.background": "#F7F7F7",   // light grey
+	"editor.lineHighlightBackground": "#ffffe0",  // light yellow background
+	"editor.lineHighlightBorder": "#C9C9C9"       // grey border
+	},
+
+  // Use tabs instead of spaces
+  "editor.insertSpaces": true,
+
+  // Set tab size to 2 spaces
+  "editor.tabSize":2,
+  "files.trimTrailingWhitespace": true,
+}
