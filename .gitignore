@@ -2,7 +2,6 @@
 
 azwenv
 workflow
-.vscode
 **/bin/
 **/obj/
 .DS_Store
