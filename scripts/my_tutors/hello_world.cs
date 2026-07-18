@@ -1,4 +1,5 @@
 #!/usr/bin/env dotnet run
+
 // The typical command to run this script
 // PS d:\> dotnet run hello_world.cs
 

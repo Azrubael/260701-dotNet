@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="src/hello/hello.csproj" />
   <Project Path="src/ms_hello/ms_hello.csproj" />
+  <Project Path="src/hello3/hello3.csproj" />
 </Solution>

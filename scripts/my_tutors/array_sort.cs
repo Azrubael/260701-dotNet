@@ -1,4 +1,5 @@
 #!/usr/bin/env dotnet run
+
 // The typical command to run this script
 // PS d:\> dotnet run hello_world.cs
 
@@ -19,4 +20,3 @@ foreach (var el in arr) {
 	Console.Write($"{el},  ");
 }
 Console.WriteLine("\nThis is the end.");
- 

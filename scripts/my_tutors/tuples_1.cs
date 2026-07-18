@@ -1,17 +1,8 @@
 #!/usr/bin/env dotnet run
-// The typical command to run this script
+
+// The typical command to run this script in windows powershell
 // PS d:\> dotnet run hello_world.cs
 
-var a = 1;
-var t = (a, b: 2, 3);
-Console.WriteLine($"The 1st element is {t.Item1} (same as {t.a}).");
-Console.WriteLine($"The 2nd element is {t.Item2} (same as {t.b}).");
-Console.WriteLine($"The 3rd element is {t.Item3}.");
-/* Output:
- * The 1st element is 1 (same as 1).
- * The 2nd element is 2 (same as 2).
- * The 3rd element is 3.
- */
 
 /* Beginning with C# 12, you can specify an alias for a tuple type with a using directive
  * After declaring the alias, you can use the BandPass name as an alias for that tuple type
@@ -23,6 +14,19 @@ Console.WriteLine($"The bandpass filter is {bracket.Min} to {bracket.Max}");
 (int a , int b) = bracket;
 Console.WriteLine($"The bracket is {a} to {b}");
 
+//=======================================================================
+var t = (a, b: 2, 3);
+Console.WriteLine($"The 1st element is {t.Item1} (same as {t.a}).");
+Console.WriteLine($"The 2nd element is {t.Item2} (same as {t.b}).");
+Console.WriteLine($"The 3rd element is {t.Item3}.");
+/* Output:
+ * The 1st element is 1 (same as 1).
+ * The 2nd element is 2 (same as 2).
+ * The 3rd element is 3.
+ */
+
+
+//=======================================================================
 int[] xs = new int[] { 4, 7, 9 };
 var limits = FindMinMax(xs);
 Console.WriteLine($"Limits of [{string.Join(" ", xs)}] are {limits.min} and {limits.max}");
@@ -50,14 +54,23 @@ Console.WriteLine($"Limits of [{string.Join(" ", ys)}] are {minimum} and {maximu
     var max = int.MinValue;
     foreach (var i in input)
     {
-        if (i < min)
-        {
-            min = i;
-        }
-        if (i > max)
-        {
-            max = i;
-        }
+        if (i < min) min = i;
+        if (i > max) max = i;
     }
     return (min, max);
 }
+
+
+// Tuple assignment and deconstruction =====================================
+(int, double) t1 = (17, 3.14);
+(double First, double Second) t2 = (0.0, 1.0);
+t2 = t1;
+Console.WriteLine($"{nameof(t2)}: {t2.First} and {t2.Second}");
+// Output:
+// t2: 17 and 3.14
+
+(double A, double B) t3 = (2.0, 3.0);
+t3 = t2;
+Console.WriteLine($"{nameof(t3)}: {t3.A} and {t3.B}");
+// Output:
+// t3: 17 and 3.14
