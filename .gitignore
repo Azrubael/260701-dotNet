@@ -2,6 +2,7 @@
 
 azwenv
 workflow
+az_output.log
 **/bin/
 **/obj/
 .DS_Store

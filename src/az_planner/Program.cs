@@ -2,17 +2,34 @@
 {
   static void Main(string[] args)
   {
-    Console.WriteLine("Message Scheduler started. Press Ctrl+C to exit.");
+
+    var initMsg = "Message Scheduler started. Press Ctrl+C to exit.";
+    Console.WriteLine(initMsg);
+
+    var logger = new Logger("logs", "az_output.log");
+    logger.Info(initMsg);
 
     int interval = GetIntervalFromArgs(args);
 
-    var scheduler = new MessageScheduler(interval);
+    var scheduler = new MessageScheduler(interval, logger);
     scheduler.Start();
 
-    // Keep the application running
-    while (true)
+    try
     {
-      Thread.Sleep(1000);
+      while (true) Thread.Sleep(1000);
+    }
+    catch (ThreadInterruptedException)
+    {
+      logger.Warn("Main loop interrupted.");
+    }
+    catch (Exception ex)
+    {
+      logger.Error($"Unhandled exception: {ex}");
+    }
+    finally
+    {
+      logger.Info("Message Scheduler shutting down.");
+      logger.Dispose();
     }
   }
 
@@ -31,33 +48,106 @@
   }
 }
 
-class MessageScheduler(int interval)
+class MessageScheduler
 {
-  private readonly int _interval = interval;
-  private Timer? _timer;
+  private readonly int _interval;
+  private readonly Timer _timer;
+  private readonly Logger _logger;
+
+  public MessageScheduler(int interval, Logger logger)
+  {
+    _interval = interval;
+    _logger = logger;
+
+    // Initialize timer; Start can still hook Ctrl+C.
+    _timer = new Timer(
+      callback: SendMessage,
+      state: null,
+      dueTime: 0,
+      period: _interval);
+  }
 
   public void Start()
   {
-    Console.WriteLine($"Scheduling messages every {TimeSpan.FromMilliseconds(_interval)}");
+    var firstMsg = $"Configured interval: {TimeSpan.FromMilliseconds(_interval)} ({_interval} ms)";
+    _logger.Info(firstMsg);
 
-    _timer = new Timer(
-        callback: SendMessage,
-        state: null,
-        dueTime: 0, // Start immediately
-        period: _interval);
-
-    // Handle Ctrl+C gracefully
     Console.CancelKeyPress += (sender, e) =>
     {
-      _timer?.Dispose();
-      Console.WriteLine("Scheduler stopped.");
+      // Prevent forced termination so logs can flush.
+      e.Cancel = true;
+
+      try
+      {
+        _timer.Dispose();
+      }
+      catch (Exception ex)
+      {
+        string errMsg = $"Error while disposing timer: {ex}";
+        _logger.Error(errMsg);
+      }
+      string stopMsg = "Scheduler stopped (Ctrl+C).";
+      _logger.Info(stopMsg);
+      // Give logger a moment to flush if needed; then exit.
+      Thread.Sleep(100);
       Environment.Exit(0);
     };
   }
 
   private void SendMessage(object? state)
   {
-    Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Sending message: 4.5.0");
-    // Add your actual message sending logic here
+    try
+    {
+      _logger.Info("The sending message: 4.5.0");
+    }
+    catch (Exception ex)
+    {
+      _logger.Error($"SendMessage failed: {ex}");
+      // Optional: decide whether to stop scheduling:
+      _timer.Dispose();
+    }
+  }
+}
+
+sealed class Logger : IDisposable
+{
+  private readonly StreamWriter _writer;
+  private readonly Lock _lock = new();
+
+  public Logger(string directory, string fileName)
+  {
+    Directory.CreateDirectory(directory);
+
+    var path = Path.Combine(directory, fileName);
+
+    // Append mode so logs keep growing; you can add rolling later if you want.
+    _writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read))
+    {
+      AutoFlush = true
+    };
+
+    Info($"Logger initialized. Writing to {path}");
+  }
+
+  public void Info(string message) => Write("INFO", message);
+  public void Warn(string message) => Write("WARN", message);
+  public void Error(string message) => Write("ERROR", message);
+
+  private void Write(string level, string message)
+  {
+    var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{level}] {message}";
+    lock (_lock)
+    {
+      Console.WriteLine(line);
+      _writer.WriteLine(line);
+    }
+  }
+
+  public void Dispose()
+  {
+    lock (_lock)
+    {
+      _writer.Dispose();
+    }
   }
 }
