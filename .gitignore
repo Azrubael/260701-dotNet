@@ -2,6 +2,7 @@
 
 azwenv
 workflow
+logs
 az_output.log
 **/bin/
 **/obj/

@@ -3,7 +3,7 @@
 // The typical command to run this script
 // PS d:\> dotnet run hello_world.cs
 
-int[] arr = { 54, 7, -41, 2, 4, 2, 89, 33, -5, 12};
+int[] arr = [54, 7, -41, 2, 4, 2, 89, 33, -5, 12];
 
 int tmp;
 for (int i = 0; i < arr.Length - 1; i++) {
