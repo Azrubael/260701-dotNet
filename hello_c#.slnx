@@ -3,4 +3,5 @@
   <Project Path="src/ms_hello/ms_hello.csproj" />
   <Project Path="src/hello3/hello3.csproj" />
   <Project Path="src/az_planner/az_planner.csproj" />
+  <Project Path="src/ls_utility/ls_utility.csproj" />
 </Solution>
