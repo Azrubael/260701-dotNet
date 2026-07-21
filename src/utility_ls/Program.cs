@@ -6,6 +6,7 @@ class Program
   static bool longFormat = false;
   static bool sortBySize = false;
   static bool reverse = false;
+  static bool humanRead = false;
   static string targetPath = Directory.GetCurrentDirectory();
 
   static void Main(string[] args)
@@ -52,11 +53,12 @@ class Program
     List information about the FILEs (the current directory by default).
 
     Options:
-    \t-a, --all            do not ignore entries starting with '.'
-    \t-l, --long           use a long listing format
-    \t-r, --r              use a reverse sorting order
-    \t-S                   sort by size
-    \t-?, --help           display this help and exit
+    \t-a, --all       do not ignore entries starting with '.'
+    \t-l, --long      use a long listing format
+    \t-h              human readable sizes
+    \t-r, --r         use a reverse sorting order
+    \t-S              sort by size
+    \t-?, --help      display this help and exit
     """;
     Console.WriteLine(helpMsg);
   }
@@ -111,6 +113,7 @@ class Program
           {
             case 'a': showAll = true; break;
             case 'l': longFormat = true; break;
+            case 'h': humanRead = true; break;
             case 'S': sortBySize = true; break;
             case 'r': reverse = true; break;
             case '?': PrintHelp(); break;
@@ -157,62 +160,87 @@ class Program
       // Format date: show time if modified today, otherwise show date
       string dateStr = fsInfo.LastWriteTime.Date == DateTime.Today
           ? fsInfo.LastWriteTime.ToString("MMM dd HH:mm")
-          : fsInfo.LastWriteTime.ToString("MMM dd yyyy");
+          : fsInfo.LastWriteTime.ToString("MMM dd  yyyy");
 
       if (entry.IsDirectory)
         Console.ForegroundColor = ConsoleColor.White;
       else
         Console.ForegroundColor = ConsoleColor.Yellow;
 
-      Console.WriteLine($"{GetPermissions(fsInfo)}  {hidden}  {size,10}  {dateStr}  {name}");
+      const int PermWidth = 11;    // "drw-r--r--" (10) + запас
+      const int HiddenWidth = 7;   // "hidden" або "  --  "
+      const int SizeWidth = 9;     // ширина під розмір
+      const int DateWidth = 15;    // "MMM dd HH:mm" або "MMM dd  yyyy"
+
+      if (humanRead)
+      {
+        string humanSize = size > 0 ? entry.FormattedSize : "--";
+        Console.WriteLine(
+            $"{GetPermissions(fsInfo),-PermWidth}" +
+            $"{hidden,-HiddenWidth}" +
+            $"{humanSize,SizeWidth}" +
+            $"  {dateStr,-DateWidth}" +
+            $" {name}"
+        );
+      }
+      else
+      {
+        Console.WriteLine(
+            $"{GetPermissions(fsInfo),-PermWidth}" +
+            $"{hidden,-HiddenWidth}" +
+            $"{size,SizeWidth}" +
+            $"  {dateStr,-DateWidth}" +
+            $" {name}"
+        );
+      }
     }
   }
 
-  static void PrintShortFormat(FileSystemEntry[] entries)
-  {
-    int consoleWidth = Console.WindowWidth;
-    int maxLength = entries.Max(e => e.Name.Length) + 2;
-    int maxColumns = Math.Max(1, consoleWidth / maxLength);
-    int columns = Math.Min(maxColumns, entries.Length);
-
-    for (int i = 0; i < entries.Length; i++)
+    static void PrintShortFormat(FileSystemEntry[] entries)
     {
-      var entry = entries[i];
-      FileSystemInfo fsInfo = new FileInfo(entry.FullPath);
-      string name = entry.Name + (entry.IsDirectory ? "/" : "");
-      if (entry.IsDirectory)
-        Console.ForegroundColor = ConsoleColor.White;
-      else
-        Console.ForegroundColor = ConsoleColor.Yellow;
-      Console.Write(name.PadRight(maxLength));
+      int consoleWidth = Console.WindowWidth;
+      int maxLength = entries.Max(e => e.Name.Length) + 2;
+      int maxColumns = Math.Max(1, consoleWidth / maxLength);
+      int columns = Math.Min(maxColumns, entries.Length);
 
-      if ((i + 1) % columns == 0 || i == entries.Length - 1)
-        Console.WriteLine();
+      for (int i = 0; i < entries.Length; i++)
+      {
+        var entry = entries[i];
+        FileSystemInfo fsInfo = new FileInfo(entry.FullPath);
+        string name = entry.Name + (entry.IsDirectory ? "/" : "");
+        if (entry.IsDirectory)
+          Console.ForegroundColor = ConsoleColor.White;
+        else
+          Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write(name.PadRight(maxLength));
+
+        if ((i + 1) % columns == 0 || i == entries.Length - 1)
+          Console.WriteLine();
+      }
     }
-  }
 
-  static FileSystemEntry[] SortDirName(FileSystemEntry[] entries, bool r)
-  {
-    if (r)
-      return [.. entries
+    static FileSystemEntry[] SortDirName(FileSystemEntry[] entries, bool r)
+    {
+      if (r)
+        return [.. entries
         .OrderByDescending(e => e.Name, StringComparer.OrdinalIgnoreCase)
         .OrderByDescending(e => e.IsDirectory)];
-    else
+
       return [.. entries
         .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
         .OrderByDescending(e => e.IsDirectory)];
-  }
+    }
 
-  static FileSystemEntry[] SortDirSize(FileSystemEntry[] entries, bool r)
-  {
-    if (r)
-      return [.. entries
+    static FileSystemEntry[] SortDirSize(FileSystemEntry[] entries, bool r)
+    {
+      if (r)
+        return [.. entries
         .OrderByDescending(e => e.Size)
         .OrderByDescending(e => e.IsDirectory)];
-    else
+
       return [.. entries
         .OrderBy(e => e.Size)
         .OrderByDescending(e => e.IsDirectory)];
-  }
+    }
 
-}
+  }
