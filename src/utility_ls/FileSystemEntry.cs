@@ -1,5 +1,7 @@
+namespace utility_ls;
+
 //A data structure to represent files and directories with their properties
-class FileSystemEntry
+public class FileSystemEntry
 {
   public string FullPath { get; set; }
   public string Name { get; set; }
@@ -25,12 +27,13 @@ class FileSystemEntry
     LastModified = fileInfo.LastWriteTime;
     Attributes = fileInfo.Attributes;
 
-    _formattedSize = new Lazy<string>(() => FormatBytes());
+    _formattedSize = new Lazy<string>(() => FormatBytes(Size));
   }
 
-  private string FormatBytes()
+
+  public static string FormatBytes(long bytes)
   {
-    string unit = Size switch
+    string unit = bytes switch
     {
       >= 1_099_511_627_776 => "Ti",
       >= 1_073_741_824 => "Gi",
@@ -39,18 +42,15 @@ class FileSystemEntry
       _ => "B"
     };
 
-    double value = Size switch
+    double value = bytes switch
     {
-      >= 1_099_511_627_776 => Size / 1_099_511_627_776.0,
-      >= 1_073_741_824 => Size / 1_073_741_824.0,
-      >= 1_048_576 => Size / 1_048_576.0,
-      >= 1024 => Size / 1024.0,
-      _ => Size
+      >= 1_099_511_627_776 => bytes / 1_099_511_627_776.0,
+      >= 1_073_741_824 => bytes / 1_073_741_824.0,
+      >= 1_048_576 => bytes / 1_048_576.0,
+      >= 1024 => bytes / 1024.0,
+      _ => bytes
     };
 
-    if (unit == "B")
-      return $"{value} {unit}";
-
-    return $"{value:F2}{unit}";
+    return unit == "B" ? $"{value} {unit}" : $"{value:F2}{unit}";
   }
 }

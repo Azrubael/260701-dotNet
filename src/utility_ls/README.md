@@ -27,4 +27,4 @@ Build succeeded in 8,4s
 -r, --r -- use reverse sorting order
 -h -- human readable sizes
 -D -- calculate directories sizes recursively
--R, --recursive -- list subdirectories recursively
+**-T -- sort by time**
