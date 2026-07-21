@@ -3,6 +3,11 @@
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true
 ```
 
+## Запуск проекту в режимі наладки з ключами
+```csharp
+dotnet run --configuration Debug -- -S -l
+```
+
 # Пояснення параметрів:
     -c Release — збірка у режимі релізу (оптимізовано для швидкості та розміру).
     -r win-x64 — збірка для 64-бітної Windows.
@@ -16,3 +21,9 @@ Restore complete (1,8s)
   ls_utility net10.0 win-x64 succeeded (6,2s) → bin\Release\net10.0\win-x64\publish\
 
 Build succeeded in 8,4s
+
+## 2026-07-21
+-S -- sort by size
+-r, --r -- use reverse sorting order
+-h -- human readable sizes
+-R, --recursive -- list subdirectories recursively

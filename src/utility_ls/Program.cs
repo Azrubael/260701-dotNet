@@ -1,35 +1,11 @@
-﻿// A simple analig of Unix 'ls' utility but intended to work in Windows 10+
+﻿// A simple analog of Unix 'ls' utility but intended to work in Windows 10+
 
 class Program
 {
-
-  //New data structure to replace string entries
-  class FileSystemEntry
-  {
-    public string FullPath { get; set; }
-    public string Name { get; set; }
-    public bool IsDirectory { get; set; }
-    public bool IsHidden { get; set; }
-    public long Size { get; set; }
-    public DateTime LastModified { get; set; }
-    public FileAttributes Attributes { get; set; }
-
-    public FileSystemEntry(string fullPath)
-    {
-      FullPath = fullPath;
-      Name = Path.GetFileName(fullPath);
-
-      var fileInfo = new FileInfo(fullPath);
-      IsDirectory = (fileInfo.Attributes & FileAttributes.Directory) != 0;
-      IsHidden = (fileInfo.Attributes & FileAttributes.Hidden) == 0;
-      Size = IsDirectory ? 0 : fileInfo.Length;
-      LastModified = fileInfo.LastWriteTime;
-      Attributes = fileInfo.Attributes;
-    }
-  }
-
   static bool showAll = false;
   static bool longFormat = false;
+  static bool sortBySize = false;
+  static bool reverse = false;
   static string targetPath = Directory.GetCurrentDirectory();
 
   static void Main(string[] args)
@@ -52,8 +28,10 @@ class Program
       // Filter hidden files
       if (!showAll) entries = [.. entries.Where(e => e.IsHidden)];
 
-      // Array.Sort(entries, StringComparer.OrdinalIgnoreCase);
-      FileSystemEntry[] sortedEntries = SortDirName(entries);
+      FileSystemEntry[] sortedEntries = sortBySize
+          ? SortDirSize(entries, reverse)
+          : SortDirName(entries, reverse);
+
 
       if (longFormat)
         PrintLongFormat(sortedEntries);
@@ -69,56 +47,92 @@ class Program
 
   static void PrintHelp()
   {
-    Console.WriteLine("Usage: ls [OPTION]... [FILE]...");
-    Console.WriteLine("List information about the FILEs (the current directory by default).");
-    Console.WriteLine();
-    Console.WriteLine("Options:");
-    Console.WriteLine("  -a, --all            do not ignore entries starting with .");
-    Console.WriteLine("  -l, --long           use a long listing format");
-    Console.WriteLine("  --help               display this help and exit");
+    string helpMsg = """
+    Usage: ls [OPTION]... [FILE]...
+    List information about the FILEs (the current directory by default).
+
+    Options:
+    \t-a, --all            do not ignore entries starting with '.'
+    \t-l, --long           use a long listing format
+    \t-r, --r              use a reverse sorting order
+    \t-S                   sort by size
+    \t-?, --help           display this help and exit
+    """;
+    Console.WriteLine(helpMsg);
   }
 
   static void ParseArguments(string[] args)
   {
     foreach (var arg in args)
     {
-      switch (arg)
+      if (string.IsNullOrWhiteSpace(arg))
+        continue;
+
+      // Long options
+      if (arg.StartsWith("--", StringComparison.Ordinal))
       {
-        case "-a" or "--all":
-          showAll = true;
-          break;
+        switch (arg)
+        {
+          case "--help":
+            PrintHelp();
+            Environment.Exit(0);
+            break;
 
-        case "-l" or "--long":
-          longFormat = true;
-          break;
+          case "--all":
+            showAll = true;
+            break;
 
-        case "-la" or "-al" or "--all --long" or "--long --all":
-          showAll = true;
-          longFormat = true;
-          break;
+          case "--long":
+            longFormat = true;
+            break;
 
-        case "--help":
-          PrintHelp();
-          Environment.Exit(0);
-          break;
+          case "--r":
+            reverse = true;
+            break;
 
-        default:
-          if (!arg.StartsWith('-'))
-            targetPath = arg;
-          else
-          {
+          default:
             Console.WriteLine($"ls: invalid option -- '{arg}'");
             Environment.Exit(1);
-          }
-          break;
+            break;
+        }
+
+        continue;
       }
+
+      // Short options or path
+      if (arg.StartsWith('-'))
+      {
+        // Support combined short flags like -lS, -alS, -la, -rS, etc.
+        for (int i = 1; i < arg.Length; i++)
+        {
+          char c = arg[i];
+
+          switch (c)
+          {
+            case 'a': showAll = true; break;
+            case 'l': longFormat = true; break;
+            case 'S': sortBySize = true; break;
+            case 'r': reverse = true; break;
+            case '?': PrintHelp(); break;
+
+            default:
+              Console.WriteLine($"ls: invalid option -- '{arg}'");
+              Environment.Exit(1);
+              break;
+          }
+        }
+
+        continue;
+      }
+
+      // Non-option token => target path
+      targetPath = arg;
     }
   }
 
   static string GetPermissions(FileSystemInfo fsInfo)
   {
-    // Windows doesn't have Unix-style permissions, so we'll use a simple representation
-    // Based on the file's read-only attribute
+    // Windows doesn't have Unix-style permissions, so we'll use a simplified representation
     string typeChar = fsInfo is DirectoryInfo ? "d" : "-";
     bool isReadOnly = (fsInfo.Attributes & FileAttributes.ReadOnly) != 0;
     string perms = isReadOnly ? "r--r--r--" : "rw-r--r--";
@@ -177,11 +191,28 @@ class Program
     }
   }
 
-  static FileSystemEntry[] SortDirName(FileSystemEntry[] entries)
+  static FileSystemEntry[] SortDirName(FileSystemEntry[] entries, bool r)
   {
-    return [.. entries
-      .OrderByDescending(e => e.IsDirectory)
-      .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)];
+    if (r)
+      return [.. entries
+        .OrderByDescending(e => e.Name, StringComparer.OrdinalIgnoreCase)
+        .OrderByDescending(e => e.IsDirectory)];
+    else
+      return [.. entries
+        .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+        .OrderByDescending(e => e.IsDirectory)];
+  }
+
+  static FileSystemEntry[] SortDirSize(FileSystemEntry[] entries, bool r)
+  {
+    if (r)
+      return [.. entries
+        .OrderByDescending(e => e.Size)
+        .OrderByDescending(e => e.IsDirectory)];
+    else
+      return [.. entries
+        .OrderBy(e => e.Size)
+        .OrderByDescending(e => e.IsDirectory)];
   }
 
 }
