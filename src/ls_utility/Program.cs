@@ -1,6 +1,33 @@
-﻿
+﻿// A simple analig of Unix 'ls' utility but intended to work in Windows 10+
+
 class Program
 {
+
+  //New data structure to replace string entries
+  class FileSystemEntry
+  {
+    public string FullPath { get; set; }
+    public string Name { get; set; }
+    public bool IsDirectory { get; set; }
+    public bool IsHidden { get; set; }
+    public long Size { get; set; }
+    public DateTime LastModified { get; set; }
+    public FileAttributes Attributes { get; set; }
+
+    public FileSystemEntry(string fullPath)
+    {
+      FullPath = fullPath;
+      Name = Path.GetFileName(fullPath);
+
+      var fileInfo = new FileInfo(fullPath);
+      IsDirectory = (fileInfo.Attributes & FileAttributes.Directory) != 0;
+      IsHidden = (fileInfo.Attributes & FileAttributes.Hidden) == 0;
+      Size = IsDirectory ? 0 : fileInfo.Length;
+      LastModified = fileInfo.LastWriteTime;
+      Attributes = fileInfo.Attributes;
+    }
+  }
+
   static bool showAll = false;
   static bool longFormat = false;
   static string targetPath = Directory.GetCurrentDirectory();
@@ -9,7 +36,6 @@ class Program
   {
     try
     {
-
       ParseArguments(args);
 
       if (!Directory.Exists(targetPath))
@@ -18,25 +44,21 @@ class Program
         Environment.Exit(1);
       }
 
-      var entries = Directory.GetFileSystemEntries(targetPath);
+      // Get entries and convert to FileSystemEntry objects
+      var entries = Directory.GetFileSystemEntries(targetPath)
+        .Select(e => new FileSystemEntry(e))
+        .ToArray();
 
-      // Фільтруємо приховані файли
-      if (!showAll)
-      {
-        entries = [.. entries.Where(e =>
-        {
-          var fileInfo = new FileInfo(e);
-          return (fileInfo.Attributes & FileAttributes.Hidden) == 0;
-        })];
-      }
+      // Filter hidden files
+      if (!showAll) entries = [.. entries.Where(e => e.IsHidden)];
 
       // Array.Sort(entries, StringComparer.OrdinalIgnoreCase);
-      entries = SortDirFile(entries);
+      FileSystemEntry[] sortedEntries = SortDirName(entries);
 
       if (longFormat)
-        PrintLongFormat(entries);
+        PrintLongFormat(sortedEntries);
       else
-        PrintShortFormat(entries);
+        PrintShortFormat(sortedEntries);
     }
     catch (Exception ex)
     {
@@ -103,48 +125,48 @@ class Program
     return $"{typeChar}{perms}";
   }
 
-  static void PrintLongFormat(string[] entries)
+  static void PrintLongFormat(FileSystemEntry[] entries)
   {
     foreach (var entry in entries)
     {
       FileSystemInfo fsInfo;
-      bool isDir = (File.GetAttributes(entry) & FileAttributes.Directory) != 0;
-
-      if (isDir)
-        fsInfo = new DirectoryInfo(entry);
+      if (entry.IsDirectory)
+        fsInfo = new DirectoryInfo(entry.FullPath);
       else
-        fsInfo = new FileInfo(entry);
+        fsInfo = new FileInfo(entry.FullPath);
 
-      string name = Path.GetFileName(entry) + (isDir ? "/" : "");
-      long size = isDir ? 0 : ((FileInfo)fsInfo).Length; // Directories show 0 size
+      string name = entry.Name + (entry.IsDirectory ? "/" : "");
+      string hidden = entry.IsHidden ? "  --  " : "hidden";
+
+      long size = entry.IsDirectory ? 0 : entry.Size; // Directories show 0 size
 
       // Format date: show time if modified today, otherwise show date
       string dateStr = fsInfo.LastWriteTime.Date == DateTime.Today
           ? fsInfo.LastWriteTime.ToString("MMM dd HH:mm")
-          : fsInfo.LastWriteTime.ToString("MMM dd  yyyy");
+          : fsInfo.LastWriteTime.ToString("MMM dd yyyy");
 
-      if (isDir)
+      if (entry.IsDirectory)
         Console.ForegroundColor = ConsoleColor.White;
       else
         Console.ForegroundColor = ConsoleColor.Yellow;
 
-      Console.WriteLine($"{GetPermissions(fsInfo)}  1  user  group  {size,10}  {dateStr}  {name}");
+      Console.WriteLine($"{GetPermissions(fsInfo)}  {hidden}  {size,10}  {dateStr}  {name}");
     }
   }
 
-  static void PrintShortFormat(string[] entries)
+  static void PrintShortFormat(FileSystemEntry[] entries)
   {
     int consoleWidth = Console.WindowWidth;
-    int maxLength = entries.Max(e => Path.GetFileName(e).Length) + 2;
+    int maxLength = entries.Max(e => e.Name.Length) + 2;
     int maxColumns = Math.Max(1, consoleWidth / maxLength);
     int columns = Math.Min(maxColumns, entries.Length);
 
     for (int i = 0; i < entries.Length; i++)
     {
-      var fileInfo = new FileInfo(entries[i]);
-      bool isDir = (fileInfo.Attributes & FileAttributes.Directory) != 0;
-      string name = Path.GetFileName(entries[i]) + (isDir ? "/" : "");
-      if (isDir)
+      var entry = entries[i];
+      FileSystemInfo fsInfo = new FileInfo(entry.FullPath);
+      string name = entry.Name + (entry.IsDirectory ? "/" : "");
+      if (entry.IsDirectory)
         Console.ForegroundColor = ConsoleColor.White;
       else
         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -155,27 +177,11 @@ class Program
     }
   }
 
-  static string[] SortDirFile(string[] entries)
+  static FileSystemEntry[] SortDirName(FileSystemEntry[] entries)
   {
-    string[] directories = [];
-    string[] files = [];
-    foreach (var entry in entries)
-    {
-      bool isDir = (File.GetAttributes(entry) & FileAttributes.Directory) != 0;
-      if (isDir)
-      {
-        Array.Resize(ref directories, directories.Length + 1);
-        directories[^1] = entry;
-      } else
-      {
-        Array.Resize(ref files, files.Length + 1);
-        files[^1] = entry;
-      }
-    }
-    Array.Sort(directories, StringComparer.OrdinalIgnoreCase);
-    Array.Sort(files, StringComparer.OrdinalIgnoreCase);
-
-    return [.. directories, .. files];
+    return [.. entries
+      .OrderByDescending(e => e.IsDirectory)
+      .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)];
   }
 
 }
