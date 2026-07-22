@@ -25,15 +25,16 @@ class Program
         Environment.Exit(1);
       }
 
-      // Get entries and convert to FileSystemEntry objects
+      // Get entries and convert to FileSystemItem objects
       var entries = Directory.GetFileSystemEntries(targetPath)
-        .Select(e => new FileSystemEntry(e))
+        .Select(e => new FileSystemItem(e, recursiveSize))
         .ToArray();
 
-      // Filter hidden files
-      if (!showAll) entries = [.. entries.Where(e => e.IsHidden)];
 
-      FileSystemEntry[] sortedEntries = sortBySize
+      // Filter hidden files
+      if (showAll) entries = [.. entries.Where(e => e.IsHidden)];
+
+      FileSystemItem[] sortedEntries = sortBySize
           ? SortDirSize(entries, reverse)
           : SortDirName(entries, reverse);
 
@@ -118,8 +119,8 @@ class Program
           switch (c)
           {
             case 'a': showAll = true; break;
-            case 'l': longFormat = true; break;
             case 'D': recursiveSize = true; break;
+            case 'l': longFormat = true; break;
             case 'h': humanRead = true; break;
             case 'S': sortBySize = true; break;
             case 'r': reverse = true; break;
@@ -133,7 +134,6 @@ class Program
         }
         continue;
       }
-
       targetPath = arg;
     }
   }
@@ -149,27 +149,18 @@ class Program
   }
 
 
-  static void PrintLongFormat(FileSystemEntry[] entries)
+  static void PrintLongFormat(FileSystemItem[] entries)
   {
     foreach (var entry in entries)
     {
-      FileSystemInfo fsInfo;
-      if (entry.IsDirectory)
-        fsInfo = new DirectoryInfo(entry.FullPath);
-      else
-        fsInfo = new FileInfo(entry.FullPath);
+      FileSystemInfo fsInfo = entry.IsDirectory
+        ? new DirectoryInfo(entry.FullPath)
+        : new FileInfo(entry.FullPath);
 
       string name = entry.Name + (entry.IsDirectory ? "/" : "");
       string hidden = entry.IsHidden ? "  --  " : "hidden";
 
-      string size = (entry.IsDirectory, recursiveSize, humanRead) switch
-      {
-        (false, _, false) => entry.Size.ToString(),
-        (false, _, true) => entry.FormattedSize,
-        (true, false, _) => "--",
-        (true, true, false) => GetDirectorySize(entry.FullPath).ToString(),
-        (true, true, true) => FileSystemEntry.FormatBytes(GetDirectorySize(entry.FullPath)),
-      };
+      string size = humanRead ? entry.HumanReadSize : entry.Size.ToString();
 
       // Format date: show time if modified today, otherwise show date
       string dateStr = fsInfo.LastWriteTime.ToString("dd.MM.yyyy HH:mm");
@@ -194,7 +185,7 @@ class Program
   }
 
 
-  static void PrintShortFormat(FileSystemEntry[] entries)
+  static void PrintShortFormat(FileSystemItem[] entries)
   {
     int consoleWidth = Console.WindowWidth;
     int maxLength = entries.Max(e => e.Name.Length) + 2;
@@ -218,7 +209,7 @@ class Program
   }
 
 
-  static FileSystemEntry[] SortDirName(FileSystemEntry[] entries, bool r)
+  static FileSystemItem[] SortDirName(FileSystemItem[] entries, bool r)
   {
     if (r)
       return [.. entries
@@ -231,7 +222,7 @@ class Program
   }
 
 
-  static FileSystemEntry[] SortDirSize(FileSystemEntry[] entries, bool r)
+  static FileSystemItem[] SortDirSize(FileSystemItem[] entries, bool r)
   {
     if (r)
       return [.. entries
