@@ -27,4 +27,8 @@ Build succeeded in 8,4s
 -r, --r -- use reverse sorting order
 -h -- human readable sizes
 -D -- calculate directories sizes recursively
-**-T -- sort by time**
+
+
+1) **-T -- sort by time**
+2) потрібно додати радок підсумкової інформації в розгорнутому вигляді.
+3) Потрібно зробити сортировку директорій після визначення іхнього розміру

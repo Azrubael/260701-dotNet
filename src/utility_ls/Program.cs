@@ -1,6 +1,7 @@
 ﻿// A simple analog of Unix 'ls' utility but intended to work in Windows 10+
 namespace utility_ls;
 
+
 class Program
 {
   static bool showAll = false;
@@ -10,6 +11,7 @@ class Program
   static bool humanRead = false;
   static bool recursiveSize = false;
   static string targetPath = Directory.GetCurrentDirectory();
+
 
   static void Main(string[] args)
   {
@@ -48,6 +50,7 @@ class Program
     }
   }
 
+
   static void PrintHelp()
   {
     string helpMsg = """
@@ -65,6 +68,7 @@ class Program
     """;
     Console.WriteLine(helpMsg);
   }
+
 
   static void ParseArguments(string[] args)
   {
@@ -100,7 +104,6 @@ class Program
             Environment.Exit(1);
             break;
         }
-
         continue;
       }
 
@@ -128,14 +131,13 @@ class Program
               break;
           }
         }
-
         continue;
       }
 
-      // Non-option token => target path
       targetPath = arg;
     }
   }
+
 
   static string GetPermissions(FileSystemInfo fsInfo)
   {
@@ -145,6 +147,7 @@ class Program
     string perms = isReadOnly ? "r--r--r--" : "rw-r--r--";
     return $"{typeChar}{perms}";
   }
+
 
   static void PrintLongFormat(FileSystemEntry[] entries)
   {
@@ -158,18 +161,6 @@ class Program
 
       string name = entry.Name + (entry.IsDirectory ? "/" : "");
       string hidden = entry.IsHidden ? "  --  " : "hidden";
-
-      // long size = entry.IsDirectory ? 0 : entry.Size; // Directories show 0 size
-
-      // string size = "";
-      // if (!entry.IsDirectory)
-      //   size = Convert.ToString(entry.Size);
-      // else if (entry.IsDirectory && !recursiveSize)
-      //   size = "--";
-      // else if (entry.IsDirectory && recursiveSize && !humanRead)
-      //   size = Convert.ToString(GetDirectorySize(entry.FullPath));
-      // else if (entry.IsDirectory && recursiveSize && humanRead)
-      //   size = FileSystemEntry.FormatBytes(GetDirectorySize(entry.FullPath));
 
       string size = (entry.IsDirectory, recursiveSize, humanRead) switch
       {
@@ -202,6 +193,7 @@ class Program
     }
   }
 
+
   static void PrintShortFormat(FileSystemEntry[] entries)
   {
     int consoleWidth = Console.WindowWidth;
@@ -225,6 +217,7 @@ class Program
     }
   }
 
+
   static FileSystemEntry[] SortDirName(FileSystemEntry[] entries, bool r)
   {
     if (r)
@@ -237,6 +230,7 @@ class Program
         .OrderByDescending(e => e.IsDirectory)];
   }
 
+
   static FileSystemEntry[] SortDirSize(FileSystemEntry[] entries, bool r)
   {
     if (r)
@@ -248,6 +242,7 @@ class Program
         .OrderBy(e => e.Size)
         .OrderByDescending(e => e.IsDirectory)];
   }
+
 
   static long GetDirectorySize(string directoryPath)
   {

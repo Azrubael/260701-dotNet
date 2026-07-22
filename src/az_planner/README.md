@@ -1,0 +1,1 @@
+A small utility-scheduler that sends messages and writes in log file 'az_output.log' every 2 hours. 2 minutes and 12 seconds.
