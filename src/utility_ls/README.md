@@ -29,6 +29,19 @@ Build succeeded in 8,4s
 -D -- calculate directories sizes recursively
 
 
++ Потрібно зробити сортировку директорій після визначення іхнього розміру
 1) **-T -- sort by time**
 2) потрібно додати рядок підсумкової інформації в розгорнутому вигляді.
-+ Потрібно зробити сортировку директорій після визначення іхнього розміру
+3) Виправити відображення аттрибутів
+    Directory: D:\Project\code\dotNet\src\utility_ls
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        21.07.2026      9:51                bin
+d-----        22.07.2026     11:19                obj
+d-----        22.07.2026     10:59                workflow
+-a----        22.07.2026     12:57           2363 FileSystemItem.cs
+-a----        22.07.2026     15:32           7425 Program.cs
+-a----        22.07.2026     15:40           1721 README.md
+-a----        19.07.2026     19:50            253 utility_ls.csproj
+

@@ -10,8 +10,12 @@ public readonly struct FileSystemItem
   public DateTime LastModified { get; }
   public FileAttributes Attributes { get; }
 
+  private readonly Lazy<string> _winAttrString;
+  public string WinAttrString => _winAttrString.Value;
+
   private readonly Lazy<string> _humanReadSize;
   public string HumanReadSize => _humanReadSize.Value;
+
 
   public FileSystemItem(string fullPath, bool recursiveSize)
   {
@@ -30,8 +34,37 @@ public readonly struct FileSystemItem
     LastModified = fileInfo.LastWriteTime;
     Attributes = fileInfo.Attributes;
 
+    var attr = Attributes;
+    _winAttrString = new Lazy<string>(() => GetWindowsMode(attr));
+
     var itemSize = Size;
     _humanReadSize = new Lazy<string>(() => FormatBytes(itemSize));
+  }
+
+
+  public static string GetWindowsMode(FileAttributes attr)
+  {
+    string mode = "";
+
+    // Directory indicator
+    mode += (attr & FileAttributes.Directory) != 0 ? "d" : "-";
+
+    // Archive attribute
+    mode += (attr & FileAttributes.Archive) != 0 ? "a" : "-";
+
+    // Read-only attribute
+    mode += (attr & FileAttributes.ReadOnly) != 0 ? "r" : "-";
+
+    // Hidden attribute
+    mode += (attr & FileAttributes.Hidden) != 0 ? "h" : "-";
+
+    // System attribute
+    mode += (attr & FileAttributes.System) != 0 ? "s" : "-";
+
+    // Compressed attribute
+    mode += (attr & FileAttributes.Compressed) != 0 ? "c" : "-";
+
+    return mode;
   }
 
 

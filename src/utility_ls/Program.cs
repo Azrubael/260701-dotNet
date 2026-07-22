@@ -25,24 +25,22 @@ class Program
         Environment.Exit(1);
       }
 
-      // Get entries and convert to FileSystemItem objects
+      // Get entries, convert to FileSystemItem objects, filter hidden files
       var entries = Directory.GetFileSystemEntries(targetPath)
         .Select(e => new FileSystemItem(e, recursiveSize))
+        .Where(e => showAll || !e.IsHidden)
         .ToArray();
-
-
-      // Filter hidden files
-      if (showAll) entries = [.. entries.Where(e => e.IsHidden)];
 
       FileSystemItem[] sortedEntries = sortBySize
           ? SortDirSize(entries, reverse)
           : SortDirName(entries, reverse);
 
-
+      Console.WriteLine();
       if (longFormat)
         PrintLongFormat(sortedEntries);
       else
         PrintShortFormat(sortedEntries);
+      Console.WriteLine();
     }
     catch (Exception ex)
     {
@@ -110,8 +108,7 @@ class Program
 
       // Short options or path
       if (arg.StartsWith('-'))
-      {
-        // Support combined short flags like -lS, -alS, -la, -rS, etc.
+      { // Support combined short flags like -lS, -alS, -la, -rS, etc.
         for (int i = 1; i < arg.Length; i++)
         {
           char c = arg[i];
@@ -139,49 +136,42 @@ class Program
   }
 
 
-  static string GetPermissions(FileSystemInfo fsInfo)
-  {
-    // Windows doesn't have Unix-style permissions, so we'll use a simplified representation
-    string typeChar = fsInfo is DirectoryInfo ? "d" : "-";
-    bool isReadOnly = (fsInfo.Attributes & FileAttributes.ReadOnly) != 0;
-    string perms = isReadOnly ? "r--r--r--" : "rw-r--r--";
-    return $"{typeChar}{perms}";
-  }
-
-
   static void PrintLongFormat(FileSystemItem[] entries)
   {
+    long totalSize = 0;
     foreach (var entry in entries)
     {
+      totalSize += entry.Size;
       FileSystemInfo fsInfo = entry.IsDirectory
         ? new DirectoryInfo(entry.FullPath)
         : new FileInfo(entry.FullPath);
 
       string name = entry.Name + (entry.IsDirectory ? "/" : "");
-      string hidden = entry.IsHidden ? "  --  " : "hidden";
+      string modeString = entry.WinAttrString;
 
       string size = humanRead ? entry.HumanReadSize : entry.Size.ToString();
 
-      // Format date: show time if modified today, otherwise show date
       string dateStr = fsInfo.LastWriteTime.ToString("dd.MM.yyyy HH:mm");
 
-      const int PermWidth = 11;    // "drw-r--r--" + запас
-      const int HiddenWidth = 7;   // "hidden" або "  --  "
-      const int SizeWidth = 9;     // ширина під розмір
-      const int DateWidth = 16;    // "dd.MM.yyyy HH:mm"
+      const int PermWidth = 8;    // "d--h--" + запас
+      const int SizeWidth = 16;   // ширина під розмір
+      const int DateWidth = 16;   // "dd.MM.yyyy HH:mm"
 
       Console.ForegroundColor = entry.IsDirectory
         ? ConsoleColor.White
         : ConsoleColor.Yellow;
 
       Console.WriteLine(
-          $"{GetPermissions(fsInfo),-PermWidth}" +
-          $"{hidden,-HiddenWidth}" +
+          $"{modeString,-PermWidth}" +
           $"{size,SizeWidth}" +
           $"  {dateStr,-DateWidth}" +
           $"  {name}"
         );
     }
+
+    string totalMsg = FileSystemItem.FormatBytes(totalSize);
+    Console.WriteLine("\nThe total size of the current directory is: " +
+                        totalMsg);
   }
 
 
