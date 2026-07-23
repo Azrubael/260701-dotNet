@@ -7,6 +7,7 @@ class Program
   static bool showAll = false;
   static bool longFormat = false;
   static bool sortBySize = false;
+  static bool sortByTime = false;
   static bool reverse = false;
   static bool humanRead = false;
   static bool recursiveSize = false;
@@ -31,9 +32,13 @@ class Program
         .Where(e => showAll || !e.IsHidden)
         .ToArray();
 
-      FileSystemItem[] sortedEntries = sortBySize
-          ? SortDirSize(entries, reverse)
-          : SortDirName(entries, reverse);
+      FileSystemItem[] sortedEntries = (sortBySize, sortByTime) switch
+      {
+        (false, false) => SortByName(entries, reverse),
+        (true, false) => SortBySize(entries, reverse),
+        (false, true) => SortByTime(entries, reverse),
+        (true, true) => SortByTimeSize(entries, reverse),
+      };
 
       Console.WriteLine();
       if (longFormat)
@@ -63,6 +68,7 @@ class Program
       -h              human readable sizes
       -r, --r         use a reverse sorting order
       -S              sort by size
+      -T              sort by time
       -?, --help      display this help and exit
     """;
     Console.WriteLine(helpMsg);
@@ -119,8 +125,9 @@ class Program
             case 'D': recursiveSize = true; break;
             case 'l': longFormat = true; break;
             case 'h': humanRead = true; break;
-            case 'S': sortBySize = true; break;
             case 'r': reverse = true; break;
+            case 'S': sortBySize = true; break;
+            case 'T': sortByTime = true; break;
             case '?': PrintHelp(); break;
 
             default:
@@ -199,7 +206,7 @@ class Program
   }
 
 
-  static FileSystemItem[] SortDirName(FileSystemItem[] entries, bool r)
+  static FileSystemItem[] SortByName(FileSystemItem[] entries, bool r)
   {
     if (r)
       return [.. entries
@@ -212,7 +219,7 @@ class Program
   }
 
 
-  static FileSystemItem[] SortDirSize(FileSystemItem[] entries, bool r)
+  static FileSystemItem[] SortBySize(FileSystemItem[] entries, bool r)
   {
     if (r)
       return [.. entries
@@ -224,6 +231,32 @@ class Program
         .OrderByDescending(e => e.IsDirectory)];
   }
 
+
+  static FileSystemItem[] SortByTime(FileSystemItem[] entries, bool r)
+  {
+    if (r)
+      return [.. entries
+        .OrderByDescending(e => e.LastModified)
+        .OrderByDescending(e => e.IsDirectory)];
+
+    return [.. entries
+        .OrderBy(e => e.LastModified)
+        .OrderByDescending(e => e.IsDirectory)];
+  }
+
+  static FileSystemItem[] SortByTimeSize(FileSystemItem[] entries, bool r)
+  {
+    if (r)
+      return [.. entries
+        .OrderByDescending(e => e.LastModified)
+        .OrderByDescending(e => e.Size)
+        .OrderByDescending(e => e.IsDirectory)];
+
+    return [.. entries
+        .OrderBy(e => e.LastModified)
+        .OrderBy(e => e.Size)
+        .OrderByDescending(e => e.IsDirectory)];
+  }
 
   static long GetDirectorySize(string directoryPath)
   {
