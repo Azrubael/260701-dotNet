@@ -1,5 +1,4 @@
-﻿
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 class Program
 {
@@ -71,12 +70,9 @@ class Program
       ulong availPhys = mem.ullAvailPhys;
       ulong systemCache = perf.SystemCache.ToUInt64();
 
-      ulong buffCacheLike = systemCache;
-
       Console.WriteLine($"Total physical:     {FormatBytes(totalPhys)}");
       Console.WriteLine($"Available physical: {FormatBytes(availPhys)}");
-      Console.WriteLine($"Cache-like (SystemCache): {FormatBytes(systemCache)}");
-      Console.WriteLine($"Approx buff/cache-like:    {FormatBytes(buffCacheLike)}");
+      Console.WriteLine($"Approx cache-like (SystemCache): {FormatBytes(systemCache)}");
 
       long usedNonCacheApprox = (long)totalPhys - (long)availPhys - (long)systemCache;
       if (usedNonCacheApprox < 0) usedNonCacheApprox = 0;
@@ -99,7 +95,7 @@ class Program
 
     static string FormatBytes(ulong bytes)
     {
-        string[] units = { "B", "KB", "MB", "GB", "TB", "PB" };
+        string[] units = ["B", "KB", "MB", "GB", "TB", "PB"];
         double v = bytes;
         int i = 0;
         while (v >= 1024 && i < units.Length - 1)

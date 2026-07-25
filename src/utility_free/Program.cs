@@ -23,13 +23,13 @@ class Program
     public ulong TotalVirtual;
     public ulong AvailVirtual;
     public ulong AvailExtendedVirtual;
-    public ulong SystemCache;
+    // public ulong SystemCache;
 
     public MemoryStatusEX()
     {
       dwLength = (uint)Marshal.SizeOf<MemoryStatusEX>();
-      var perf = GetPerfInfo();
-      SystemCache = perf.SystemCache.ToUInt64();
+      // var perf = GetPerfInfo();
+      // SystemCache = perf.SystemCache.ToUInt64();
     }
   }
 
@@ -75,10 +75,10 @@ class Program
   static void Main(string[] args)
   {
     ParseArguments(args);
-    if  (_help)
+    if (_help)
     {
       ShowHelp();
-      Environment.Exit(0);
+      return;
     }
     // WriteShortReport();
     DisplayMemoryInfo();
@@ -116,8 +116,8 @@ class Program
 
           break;
         default:
-          WriteShortReport();
-          Environment.Exit(0);
+          _help = true;
+          Console.Error.WriteLine($"Unknown option: {_args[i]}");
           break;
       }
     }
@@ -142,31 +142,19 @@ class Program
   }
 
 
-  static void WriteShortReport()
+  static void WriteShortReport(MemoryStatusEX mem, ulong systemCache)
   {
-    // Must pass a real variable to ref parameter
-    var memInit = new MemoryStatusEX { dwLength = (uint)Marshal.SizeOf<MemoryStatusEX>() };
-
-    if (!GlobalMemoryStatusEx(ref memInit))
-    {
-      var err = Marshal.GetLastWin32Error();
-      Console.Error.WriteLine($"GlobalMemoryStatusEx failed: {err}");
-      return;
-    }
-
-    var mem = memInit; // now we have valid initialized struct
-
     ulong totalPhys = mem.TotalPhys;
     ulong availPhys = mem.AvailPhys;
-    ulong systemCache = mem.SystemCache;
 
-    Console.WriteLine($"Total physical:     {FormatBytes(totalPhys)}");
-    Console.WriteLine($"Available physical: {FormatBytes(availPhys)}");
-    Console.WriteLine($"Approx cache-like (SystemCache): {FormatBytes(systemCache)}");
+    ulong usedPhys = totalPhys > availPhys ? totalPhys - availPhys : 0;
+    ulong usedNonCache = usedPhys > systemCache ? usedPhys - systemCache : 0;
 
-    long usedNonCacheApprox = (long)totalPhys - (long)availPhys - (long)systemCache;
-    if (usedNonCacheApprox < 0) usedNonCacheApprox = 0;
-    Console.WriteLine($"Approx used (non-cache):   {FormatBytes((ulong)usedNonCacheApprox)}");
+    Console.WriteLine("\n--- Detailed Breakdown ---");
+    Console.WriteLine($"Total physical:              {FormatBytes(totalPhys)}");
+    Console.WriteLine($"Available physical:          {FormatBytes(availPhys)}");
+    Console.WriteLine($"System Cache:                {FormatBytes(systemCache)}");
+    Console.WriteLine($"Used physical (non-cache):   {FormatBytes(usedNonCache)}");
   }
 
 
@@ -193,15 +181,22 @@ class Program
   {
     try
     {
-      var memoryStatus = GetMemoryStatus();
-      if (OperatingSystem.IsWindows())
+      if (!OperatingSystem.IsWindows())
       {
-        var swapInfo = GetSwapInfo();
-        if (_humanReadable) PrintHumanReadable(memoryStatus, swapInfo);
-        else PrintRaw(memoryStatus, swapInfo);
+        Console.Error.WriteLine("This utility only supports Windows OS.");
+        return;
+      }
 
-        if (_showTotal) WriteShortReport();
-      };
+      var mem = GetMemoryStatus();
+      ulong systemCache = GetSystemCacheBytes();
+
+      if (_humanReadable)
+        PrintFormatted(mem, systemCache, isHumanReadable: true);
+      else
+        PrintFormatted(mem, systemCache, isHumanReadable: false);
+
+      if (_showTotal)
+        WriteShortReport(mem, systemCache);
     }
     catch (Exception ex)
     {
@@ -215,11 +210,24 @@ class Program
     var status = new MemoryStatusEX();
     if (!GlobalMemoryStatusEx(ref status))
     {
-      throw new InvalidOperationException("Failed to get memory status");
+      var err = Marshal.GetLastWin32Error();
+      throw new InvalidOperationException($"GlobalMemoryStatusEx failed with Win32 error: {err}");
     }
     return status;
   }
 
+
+  private static ulong GetSystemCacheBytes()
+  {
+    int cb = Marshal.SizeOf<PERFORMANCE_INFORMATION>();
+    if (!GetPerformanceInfo(out PERFORMANCE_INFORMATION pi, cb))
+    {
+      return 0;
+    }
+
+    // SystemCache is reported in pages, multiply by PageSize to get bytes
+    return pi.SystemCache.ToUInt64() * pi.PageSize.ToUInt64();
+  }
 
   static PERFORMANCE_INFORMATION GetPerfInfo()
   {
@@ -275,40 +283,25 @@ class Program
   }
 
 
-  private static void PrintHumanReadable(MemoryStatusEX memoryStatus, SwapInfo swapInfo)
+  private static void PrintFormatted(MemoryStatusEX mem, ulong systemCache, bool isHumanReadable)
   {
-    Console.WriteLine("""
-            Type        Total    Used    Free   Buff/Cache  Available
-            Mem:        {0,10}  {1,10}  {2,10}  {3,10}     {4,10}
-            Swap:       {5,10}  {6,10}  {7,10}
-            """,
-        FormatBytes(memoryStatus.TotalPhys),
-        FormatBytes(memoryStatus.TotalPhys - memoryStatus.AvailPhys),
-        FormatBytes(memoryStatus.AvailPhys),
-        FormatBytes(memoryStatus.TotalPhys - memoryStatus.AvailPhys - memoryStatus.TotalPageFile + memoryStatus.AvailPageFile),
-        FormatBytes(memoryStatus.AvailPageFile),
-        FormatBytes(memoryStatus.TotalPageFile),
-        FormatBytes(swapInfo.CurrentUsage),
-        FormatBytes(memoryStatus.TotalPageFile - memoryStatus.AvailPageFile)
-    );
-  }
+    ulong totalPhys = mem.TotalPhys;
+    ulong availPhys = mem.AvailPhys;
+    ulong usedPhys = totalPhys - availPhys;
 
+    // Windows Commit Limit / Usage (RAM + PageFile)
+    ulong commitTotal = mem.TotalPageFile - mem.AvailPageFile;
+    ulong commitLimit = mem.TotalPageFile;
 
-  private static void PrintRaw(MemoryStatusEX memoryStatus, SwapInfo swapInfo)
-  {
-    Console.WriteLine("""
-            Type        Total    Used    Free   Buff/Cache  Available
-            Mem:        {0,10}  {1,10}  {2,10}  {3,10}     {4,10}
-            Swap:       {5,10}  {6,10}  {7,10}
-            """,
-        memoryStatus.TotalPhys / 1024,
-        (memoryStatus.TotalPhys - memoryStatus.AvailPhys) / 1024,
-        memoryStatus.AvailPhys / 1024,
-        (memoryStatus.TotalPhys - memoryStatus.AvailPhys - memoryStatus.TotalPageFile + memoryStatus.AvailPageFile) / 1024,
-        memoryStatus.AvailPageFile / 1024,
-        memoryStatus.TotalPageFile / 1024,
-        swapInfo.CurrentUsage,
-        (memoryStatus.TotalPageFile - memoryStatus.AvailPageFile) / 1024
-    );
+    Func<ulong, string> fmt = isHumanReadable
+        ? FormatBytes
+        : (b => (b / 1024).ToString()); // Standard Linux free command defaults to KB
+
+    string label = isHumanReadable ? "" : " (KiB)";
+
+    // Define fixed width per column (12 chars width, left-aligned for labels, right-aligned for values)
+    Console.WriteLine($"{label,-8} {"Total",12} {"Used",12} {"Free",12} {"Buff/Cache",12} {"Available",12}");
+    Console.WriteLine($"{"Mem:",-8} {fmt(totalPhys),12} {fmt(usedPhys),12} {fmt(availPhys - systemCache),12} {fmt(systemCache),12} {fmt(availPhys),12}");
+    Console.WriteLine($"{"Commit:",-8} {fmt(commitLimit),12} {fmt(commitTotal),12} {fmt(commitLimit - commitTotal),12}");
   }
 }
