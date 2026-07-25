@@ -7,7 +7,7 @@ class Program
   static bool _showTotal = false;
   static bool _continuous = false;
   static bool _help = false;
-  static int _interval = 1; // seconds
+  static int _interval = 2; // seconds
   static int _count = -1;   // -1 means infinite
 
 
@@ -23,13 +23,10 @@ class Program
     public ulong TotalVirtual;
     public ulong AvailVirtual;
     public ulong AvailExtendedVirtual;
-    // public ulong SystemCache;
 
     public MemoryStatusEX()
     {
       dwLength = (uint)Marshal.SizeOf<MemoryStatusEX>();
-      // var perf = GetPerfInfo();
-      // SystemCache = perf.SystemCache.ToUInt64();
     }
   }
 
@@ -99,21 +96,21 @@ class Program
           _showTotal = true;
           break;
         case "-s" or "--seconds":
-          if (i + 1 < _args.Length && int.TryParse(_args[++i], out var seconds))
+          if (i+1 < _args.Length && int.TryParse(_args[i+1], out var seconds))
           {
             _interval = seconds;
           }
           _continuous = true;
           break;
         case "-c" or "--count":
-          if (i + 1 < _args.Length && int.TryParse(_args[++i], out var count))
+          if (i+1 < _args.Length && int.TryParse(_args[i+1], out var count))
           {
             _count = count;
           }
+          _continuous = true;
           break;
         case "-?" or "--help":
           _help = true;
-
           break;
         default:
           _help = true;
@@ -138,6 +135,10 @@ class Program
         -s, --seconds N Continuously display every N seconds
         -c, --count N   Display N times (used with -s)
         -?, --help      Show this help message
+
+    Legend:
+      Mem:    - Physical RAM
+      Commit: - Virtual Memory Pool
     """);
   }
 
@@ -150,11 +151,21 @@ class Program
     ulong usedPhys = totalPhys > availPhys ? totalPhys - availPhys : 0;
     ulong usedNonCache = usedPhys > systemCache ? usedPhys - systemCache : 0;
 
+
     Console.WriteLine("\n--- Detailed Breakdown ---");
     Console.WriteLine($"Total physical:              {FormatBytes(totalPhys)}");
     Console.WriteLine($"Available physical:          {FormatBytes(availPhys)}");
     Console.WriteLine($"System Cache:                {FormatBytes(systemCache)}");
     Console.WriteLine($"Used physical (non-cache):   {FormatBytes(usedNonCache)}");
+
+    if (OperatingSystem.IsWindows())
+      {
+        var swapInfo = GetSwapInfo();
+        var totalSwap = FormatBytes(mem.TotalPageFile);
+        var usedSwap = FormatBytes(swapInfo.CurrentUsage);
+
+        Console.WriteLine($"Swap (Max / Used): ({totalSwap} / {usedSwap})");
+      }
   }
 
 
@@ -190,10 +201,7 @@ class Program
       var mem = GetMemoryStatus();
       ulong systemCache = GetSystemCacheBytes();
 
-      if (_humanReadable)
-        PrintFormatted(mem, systemCache, isHumanReadable: true);
-      else
-        PrintFormatted(mem, systemCache, isHumanReadable: false);
+      PrintFormatted(mem, systemCache, _humanReadable);
 
       if (_showTotal)
         WriteShortReport(mem, systemCache);
@@ -227,18 +235,6 @@ class Program
 
     // SystemCache is reported in pages, multiply by PageSize to get bytes
     return pi.SystemCache.ToUInt64() * pi.PageSize.ToUInt64();
-  }
-
-  static PERFORMANCE_INFORMATION GetPerfInfo()
-  {
-    _ = new PERFORMANCE_INFORMATION();
-    int cb = Marshal.SizeOf<PERFORMANCE_INFORMATION>();
-    if (!GetPerformanceInfo(out PERFORMANCE_INFORMATION pi, cb))
-    {
-      var err = Marshal.GetLastWin32Error();
-      throw new InvalidOperationException($"GetPerformanceInfo failed: {err}");
-    }
-    return pi;
   }
 
 
@@ -285,21 +281,22 @@ class Program
 
   private static void PrintFormatted(MemoryStatusEX mem, ulong systemCache, bool isHumanReadable)
   {
+    // Physical RAM
     ulong totalPhys = mem.TotalPhys;
     ulong availPhys = mem.AvailPhys;
     ulong usedPhys = totalPhys - availPhys;
 
-    // Windows Commit Limit / Usage (RAM + PageFile)
+    // Windows Virtual Memory Pool / Usage (RAM + PageFile)
     ulong commitTotal = mem.TotalPageFile - mem.AvailPageFile;
     ulong commitLimit = mem.TotalPageFile;
 
     Func<ulong, string> fmt = isHumanReadable
         ? FormatBytes
-        : (b => (b / 1024).ToString()); // Standard Linux free command defaults to KB
+        : (b => (b / 1024).ToString()); // to KB
 
     string label = isHumanReadable ? "" : " (KiB)";
 
-    // Define fixed width per column (12 chars width, left-aligned for labels, right-aligned for values)
+    // Define fixed width per column (left-aligned for labels, right-aligned for values)
     Console.WriteLine($"{label,-8} {"Total",12} {"Used",12} {"Free",12} {"Buff/Cache",12} {"Available",12}");
     Console.WriteLine($"{"Mem:",-8} {fmt(totalPhys),12} {fmt(usedPhys),12} {fmt(availPhys - systemCache),12} {fmt(systemCache),12} {fmt(availPhys),12}");
     Console.WriteLine($"{"Commit:",-8} {fmt(commitLimit),12} {fmt(commitTotal),12} {fmt(commitLimit - commitTotal),12}");
