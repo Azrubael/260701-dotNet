@@ -98,14 +98,14 @@ class Program
         case "-s" or "--seconds":
           if (i+1 < _args.Length && int.TryParse(_args[i+1], out var seconds))
           {
-            _interval = seconds;
+            _interval = seconds; i++;
           }
           _continuous = true;
           break;
         case "-c" or "--count":
           if (i+1 < _args.Length && int.TryParse(_args[i+1], out var count))
           {
-            _count = count;
+            _count = count; i++;
           }
           _continuous = true;
           break;
@@ -285,6 +285,7 @@ class Program
     ulong totalPhys = mem.TotalPhys;
     ulong availPhys = mem.AvailPhys;
     ulong usedPhys = totalPhys - availPhys;
+    ulong freeMemory = availPhys > systemCache ? availPhys - systemCache : 0;
 
     // Windows Virtual Memory Pool / Usage (RAM + PageFile)
     ulong commitTotal = mem.TotalPageFile - mem.AvailPageFile;
@@ -298,7 +299,8 @@ class Program
 
     // Define fixed width per column (left-aligned for labels, right-aligned for values)
     Console.WriteLine($"{label,-8} {"Total",12} {"Used",12} {"Free",12} {"Buff/Cache",12} {"Available",12}");
-    Console.WriteLine($"{"Mem:",-8} {fmt(totalPhys),12} {fmt(usedPhys),12} {fmt(availPhys - systemCache),12} {fmt(systemCache),12} {fmt(availPhys),12}");
-    Console.WriteLine($"{"Commit:",-8} {fmt(commitLimit),12} {fmt(commitTotal),12} {fmt(commitLimit - commitTotal),12}");
+    Console.WriteLine($"{"Phys.RAM:",-8} {fmt(totalPhys),12} {fmt(usedPhys),12} {fmt(freeMemory),12} {fmt(systemCache),12} {fmt(availPhys),12}");
+    Console.WriteLine($"{"Virtual: ",-8} {fmt(commitLimit),12} {fmt(commitTotal),12} {fmt(commitLimit - commitTotal),12}");
+
   }
 }
