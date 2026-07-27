@@ -6,4 +6,5 @@
   <Project Path="src/utility_ls/utility_ls.csproj" />
   <Project Path="src/utility_free/utility_free.csproj" />
   <Project Path="src/utility_top/utility_top.csproj" />
+  <Project Path="src/mslearn-dotnet-files/mslearn-dotnet-files.csproj" />
 </Solution>
