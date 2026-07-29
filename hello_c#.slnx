@@ -7,4 +7,6 @@
   <Project Path="src/utility_free/utility_free.csproj" />
   <Project Path="src/utility_top/utility_top.csproj" />
   <Project Path="src/mslearn-ContosoPizza/mslearn-ContosoPizza.csproj" />
+  <Project Path="src/mslearn-webserver-simplest/mslearn-webserver-simplest.csproj" />
+  <Project Path="src/mslearn-webserver2simple/mslearn-webserver2simple.csproj" />
 </Solution>
