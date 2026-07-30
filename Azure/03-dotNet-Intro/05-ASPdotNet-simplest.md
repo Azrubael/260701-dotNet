@@ -1,7 +1,7 @@
 ## 2026-07-29
 -------------
 
-**An ASP.NET Core app and one endpoint**
+**An ASP.NET 10.0 Core app and one endpoint**
 
 ```bash
 dotnet new web -n SimpleWebApp

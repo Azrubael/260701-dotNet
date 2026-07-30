@@ -120,7 +120,7 @@ Links             : {}
 ParsedHtml        : mshtml.HTMLDocumentClass
 RawContentLength  : 392
 
-PS > type Program.css
+PS > type Program.cs
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
