@@ -4,12 +4,12 @@
 **A webApi project with .Net 8**
 
 # To install .Net 8.0 SDK
-PS> ./dotnet-install.ps1 -Version 8.0.423 
+PS> ./dotnet-install.ps1 -Version 8.0.423
 PS> dir "$env:LOCALAPPDATA\Microsoft\dotnet\sdk"
 
 PS> dotnet --list-sdks
 
-PS> dotnet --version    
+PS> dotnet --version
 
 # An optional package to transform a datatime object
 PS> dotnet add package Newtonsoft.Json
@@ -23,7 +23,7 @@ PS> dotnet run --launch-profile http
 # To install a tool intended to work with .Net core REPL
 PS> dotnet tool install -g Microsoft.dotnet-httprepl
 
-PS > type Properties/launchSettings.json                
+PS > type Properties/launchSettings.json
 {
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
@@ -93,10 +93,60 @@ Alternatively, run the following command at any time while `HttpRepl` is running
 connect https://localhost:5078
 
 
+PS D:\Project\code\dotNet> curl http://localhost:5078/pizza/1
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"id":1,"name":"Classic Italian","isGlutenFree":false}
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    Content-Type: application/json; charset=utf-8
+                    Date: Sun, 02 Aug 2026 08:59:30 GMT
+                    Server: Kestrel
+
+                    {"id":1,"name":"Classic Italian","isGlutenFree":fals...
+Forms             : {}
+Headers           : {[Transfer-Encoding, chunked], [Content-Type, application/json; charset=utf-8], [Date, Sun, 02 Aug 202
+                    6 08:59:30 GMT], [Server, Kestrel]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 54
+
+
+PS D:\Project\code\dotNet> curl http://localhost:5078/pizza/2
+
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"id":2,"name":"Veggie","isGlutenFree":true}
+RawContent        : HTTP/1.1 200 OK
+                    Transfer-Encoding: chunked
+                    Content-Type: application/json; charset=utf-8
+                    Date: Sun, 02 Aug 2026 09:01:23 GMT
+                    Server: Kestrel
+
+                    {"id":2,"name":"Veggie","isGlutenFree":true}
+Forms             : {}
+Headers           : {[Transfer-Encoding, chunked], [Content-Type, application/json; charset=utf-8], [Date, Sun, 02 Aug 202
+                    6 09:01:23 GMT], [Server, Kestrel]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 44
+
+
 # Create web APIs with ASP.NET Core -- Troubleshooting
 https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-10.0
 
 
 **QUIZ**
-Q: What is the purpose of the [ApiController] attribute?
-A: This attribute includes several opinionated API-specific behaviors, such as automatic handling for bad HTTP requests. It other words [ApiController] enables opinionated behaviors that make it easier to build web APIs.
+Q1: What is the purpose of the [ApiController] attribute?
+A1: This attribute includes several opinionated API-specific behaviors, such as automatic handling for bad HTTP requests. It other words [ApiController] enables opinionated behaviors that make it easier to build web APIs.
+
+Q2: Suppose you need to update a product's name. Which HTTP action verb is the best fit for this request?
+A2: The `PUT` verb is intended for use in modifying an existing product. Additionally, `PATCH` verb can be used to update individual properties.
+
+Q3: In which scenario is it most appropriate to return an HTTP 404 status code, and how is it accomplished in ASP.Net Core?
+A3: The `NotFound` method generates an HTTP 404 status code in the response. Using this status code is the best way to communicate that the request data doesn't exist.
