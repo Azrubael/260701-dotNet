@@ -216,3 +216,13 @@ Transfer-Encoding: chunked
 
 
 http://localhost:5078/WeatherForecast> exit
+
+
+**CRUD actions in ASP.NET Core**
+--------------------------------
+HTTP action verb		CRUD operation		ASP.NET Core attribute
+GET 					Read 				[HttpGet]
+POST 					Create 				[HttpPost]
+PUT 					Update 				[HttpPut]
+DELETE 					Delete 				[HttpDelete]
+
