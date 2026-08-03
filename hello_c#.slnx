@@ -9,4 +9,5 @@
   <Project Path="src/mslearn-ContosoPizza/mslearn-ContosoPizza.csproj" />
   <Project Path="src/mslearn-webserver-simplest/mslearn-webserver-simplest.csproj" />
   <Project Path="src/mslearn-webserver2simple/mslearn-webserver2simple.csproj" />
+  <Project Path="src/mslearn-Blazor/mslearn-Blazor.csproj" />
 </Solution>

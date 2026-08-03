@@ -20,3 +20,18 @@ git clone https://github.com/MicrosoftDocs/mslearn-create-razor-pages-aspnet-cor
 mv "mslearn-create-razor-pages-aspnet-core" "mslearn-razor-aspnet-core"
 
 ```
+
+**QUIZ**
+--------
+1. What do you need to install at a minimum to create and run Blazor apps?
+.Net SDK
+
+2. Blazor components are typically authored using what coding language?
+Razor
+
+3. Razor files are compiled int owhat C$ language feature?
+A C# class
+
+4. How are Blazor component  parameters defined?
+By using properties and the [Parameter] attribute.
+
