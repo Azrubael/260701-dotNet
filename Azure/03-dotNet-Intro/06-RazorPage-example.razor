@@ -1,0 +1,18 @@
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}
+
+/* The following example is a simple Blazor counter component implemented in Razor. 
+Every time the button is pressed the IncrementCount C# method is invoked, which increments the currentCount field, and then the component renders the updated value:
+*/
