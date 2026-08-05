@@ -6,8 +6,12 @@
   <Project Path="src/utility_ls/utility_ls.csproj" />
   <Project Path="src/utility_free/utility_free.csproj" />
   <Project Path="src/utility_top/utility_top.csproj" />
-  <Project Path="src/mslearn-ContosoPizza/mslearn-ContosoPizza.csproj" />
-  <Project Path="src/mslearn-webserver-simplest/mslearn-webserver-simplest.csproj" />
-  <Project Path="src/mslearn-webserver2simple/mslearn-webserver2simple.csproj" />
-  <Project Path="src/mslearn-Blazor/mslearn-Blazor.csproj" />
+  <Project Path="src/mslearn-dotnet-files/mslearn-dotnet-files.csproj" />
+  <Project Path="src/mslearn0-webserver-simplest/mslearn-webserver-simplest.csproj" />
+  <Project Path="src/mslearn1-ContosoPizza/mslearn-ContosoPizza.csproj" />
+  <Project Path="src/mslearn2-webserver2simple/mslearn-webserver2simple.csproj" />
+  <Project Path="src/mslearn3-Blazor/mslearn-Blazor.csproj" />
+  <Project Path="src/mslearn4-ToDo-Blazor/mslearn-ToDo-Blazor.csproj" />
+  <Project Path="src/mslearn5-IteractiveBlazor/IteractiveBlazor.csproj" />
+  <Project Path="src/mslearn6-BlazingPizza/BlazingPizza.csproj" />
 </Solution>
