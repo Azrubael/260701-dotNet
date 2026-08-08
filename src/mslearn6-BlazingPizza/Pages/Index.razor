@@ -1,32 +1,50 @@
 @page "/"
-
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 
 <div class="main">
-  <h1>Blazing Pizzas</h1>
-  <ul class="pizza-cards">
+    <h1>Blazing Pizzas</h1>
+    <ul class="pizza-cards">
     @if (specials != null)
     {
-      @foreach (var special in specials)
-      {
-        <li style="background-image: url('@special.ImageUrl')">
-          <div class="pizza-info">
+        @foreach (var special in specials)
+        {
+          <li @onclick="@(() => ShowConfigurePizzaDialog(special))" style="background-image: url('@special.ImageUrl')">
+            <div class="pizza-info">
             <span class="title">@special.Name</span>
             @special.Description
             <span class="price">@special.GetFormattedBasePrice()</span>
-          </div>
-        </li>
-      }
+            </div>
+          </li>
+        }
     }
-  </ul>
+    </ul>
 </div>
 
-@code {
-  List<Model.PizzaSpecial> specials = new();
+@if (showingConfigureDialog)
+{
+    <ConfigurePizzaDialog Model.Pizza="configuringPizza" />
+}
 
-  protected override async Task OnInitializedAsync()
-  {
-    specials = await HttpClient.GetFromJsonAsync<List<Model.PizzaSpecial>>(NavigationManager.BaseUri + "specials");
-  }
+@code {
+    List<Model.PizzaSpecial> specials = new();
+    Model.Pizza configuringPizza;
+    bool showingConfigureDialog;
+
+    protected override async Task OnInitializedAsync()
+    {
+        specials = await HttpClient.GetFromJsonAsync<List<Model.PizzaSpecial>>(NavigationManager.BaseUri + "specials");
+    }
+
+    void ShowConfigurePizzaDialog(Model.PizzaSpecial special)
+    {
+        configuringPizza = new Model.Pizza()
+        {
+            Special = special,
+            SpecialId = special.Id,
+            Size = Model.Pizza.DefaultSize
+        };
+
+        showingConfigureDialog = true;
+    }
 }
