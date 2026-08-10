@@ -17,11 +17,12 @@ class Program
   {
     var init = new Program();
 
-    var sophiaList = new List<SubjectData>();
+    // Build a dynamic array directly, with a larger overhead but flexible
+    var Sophia = new List<SubjectData>();
 
     foreach (var (key, grade, hours) in init.initData)
     {
-      sophiaList.Add(new SubjectData(
+      Sophia.Add(new SubjectData(
         key,
         grade,
         hours,
@@ -29,8 +30,6 @@ class Program
         SetGradePoints(grade, hours)
       ));
     }
-
-    SubjectData[] Sophia = [.. sophiaList];
 
     int totalCreditPoints = 0;
     int totalCreditHours = 0;
@@ -43,8 +42,8 @@ class Program
     }
 
     Console.WriteLine($"Total:              {totalCreditPoints,-7}{totalCreditHours}");
-    float avgPoints = (float)totalCreditPoints / Sophia.Length;
-    float avgHours = (float)totalCreditHours / Sophia.Length;
+    float avgPoints = (float)totalCreditPoints / Sophia.Count;
+    float avgHours = (float)totalCreditHours / Sophia.Count;
     decimal gradePointAverage = (decimal) totalCreditPoints / totalCreditHours;
 
     Console.WriteLine($"Average:            {avgPoints:0.00}  {avgHours:0.00}");
