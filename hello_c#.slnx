@@ -15,4 +15,7 @@
   <Project Path="src/mslearn5-IteractiveBlazor/IteractiveBlazor.csproj" />
   <Project Path="src/mslearn6-BlazingPizza/BlazingPizza.csproj" />
   <Project Path="src/mslearn7-TestProject/mslearn7-TestProject.csproj" />
+  <Project Path="src/mslearn8-Arrays/mslearn8-Arrays.csproj" />
+  <Project Path="src/mslearn9-PetStore/mslearn9-PetStore.csproj" />
+  <Project Path="src/260816-awards/260816-awards.csproj" />
 </Solution>

@@ -1,11 +1,11 @@
 # filtered
 
-azwenv
-workflow
 logs
 az_output.log
 **/bin/
 **/obj/
+**/workflow/
+__pycache__
 .DS_Store
 .env
 .env.local
@@ -23,5 +23,7 @@ az_output.log
 *.py[cod]
 .tox/
 **/__pycache__/
+**/lib/
+**/lib64/
 MANIFEST
-dist/
+**/dist/
