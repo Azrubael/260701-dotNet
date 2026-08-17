@@ -29,43 +29,30 @@ public class XlsxHandler
   /// </summary>
   public sealed record Person
   {
-    public string Rank { get; set; } = string.Empty;
-    public string Department { get; set; } = string.Empty;
-    public string Ipn { get; set; } = string.Empty;
-    public string Vacation { get; set; } = string.Empty;
-    public string Note { get; set; } = string.Empty;
+    public string Rank { get; set; }
+    public string Department { get; set; }
+    public string Ipn { get; set; }
+    public string Vacation { get; set; }
+    public string Note { get; set; }
 
     public Dictionary<string, string> Awards { get; set; }
 
     // "Простий" конструктор, який ініціалізує порожній словник.
-    public Person() : this(
-        rank: string.Empty,
-        department: string.Empty,
-        ipn: string.Empty,
-        vacation: string.Empty,
-        note: string.Empty,
-        awards: [])
-    { }
-
-    // "Повний" конструктор, який дозволяє задати всі значення під час ініціалізації.
-    public Person(
-        string rank,
-        string department,
-        string ipn,
-        string vacation,
-        string note,
-        Dictionary<string, string> awards)
+    public Person()
     {
-      Rank = rank;
-      Department = department;
-      Ipn = ipn;
-      Vacation = vacation;
-      Note = note;
-      Awards = awards;
+      Rank = string.Empty;
+      Department = string.Empty;
+      Ipn = string.Empty;
+      Vacation = string.Empty;
+      Note = string.Empty;
+      Awards = [];
     }
 
     public void AddAward(string day, string status) =>
         Awards.TryAdd(day, status);
+
+    public void AddNote(string note) =>
+        Note = note;
   }
 
 
@@ -88,11 +75,13 @@ public class XlsxHandler
       for (int rowNum = 4; rowNum <= 630; rowNum++)
       {
         IXLRow? row = ws.Row(rowNum);
-        fullName = CleanFullName(row.Cell(9).GetString());   // I
+        fullName = row.Cell(9).GetString();                 // I
         if (fullName == string.Empty)
           continue;
 
-        if (shpk.PersonalData.TryGetValue(fullName, out Person? person))
+        string cleanedName = CleanFullName(fullName);
+
+        if (shpk.PersonalData.TryGetValue(cleanedName, out Person? person))
         {
           person.AddAward(day, row.Cell(19).GetString());
         }
@@ -100,16 +89,15 @@ public class XlsxHandler
         {
           Person newPerson = new()
           {
-            Rank = row.Cell(8).GetString(),   // F
-            Department = row.Cell(11).GetString(),  // K
-            Ipn = row.Cell(15).GetString(),  // O
-            Vacation = row.Cell(24).GetString() // X (Excel date)
+            Rank = row.Cell(8).GetString(),                 // H
+            Department = row.Cell(11).GetString(),          // K
+            Ipn = row.Cell(15).GetString(),                 // O
+            Vacation = row.Cell(24).GetString()             // X (Excel date)
           };
           newPerson.AddAward(day, row.Cell(19).GetString());
-          shpk.AddToShpk(fullName, newPerson);
+          shpk.AddToShpk(cleanedName, newPerson);
         }
       }
-
 
     }
     catch (Exception ex)

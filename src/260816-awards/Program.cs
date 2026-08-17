@@ -34,10 +34,19 @@ class Program
     string[] dates = MakeArrayOfKeys(matchedFiles);
 
     Shpk shpk = new();
-    foreach(var (day, shpkPath) in matchedFiles)
+    foreach((string day, string shpkPath) in matchedFiles)
     {
       ReadShpk(day, shpkPath, shpk);
       Console.WriteLine($"Оброблено дані за {day}");
+    }
+
+    foreach((string k, Person v) in shpk.PersonalData)
+    {
+      Console.WriteLine(k);
+      foreach(var p in v.Awards)
+      {
+        Console.WriteLine(p);
+      }
     }
   }
 
