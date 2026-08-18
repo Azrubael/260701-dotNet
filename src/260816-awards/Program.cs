@@ -10,10 +10,10 @@ class Program
   static void Main()
   {
     string directoryPath = "d:/tmp/experiment/";
-    string?[]? filesList = FindFiles(directoryPath);
+    string?[] filesList = FindFiles(directoryPath);
     string[] xlsxFiles = [];
 
-    if (filesList == null || filesList.Length == 0)
+    if (filesList.Length == 0)
     {
       Console.WriteLine($"Директорія {directoryPath} взагалі не містить жодного файлу.");
       Environment.Exit(1);
@@ -21,10 +21,10 @@ class Program
 
     // filesList.ToList().ForEach(Console.WriteLine);
     xlsxFiles = [.. filesList
-        .Where(f => f != null)    // Filter out null elements
+        .Where(f => f != null)    // Відкилає елементи null
         .Select(f => f!)];
 
-    // Filter out only matche files
+    // Залишає тількі підходящі імена файлів
     Dictionary<string, string> matchedFiles = CheckMatching(xlsxFiles, directoryPath);
     if (matchedFiles.Count == 0)
     {

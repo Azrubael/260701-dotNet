@@ -11,7 +11,7 @@ public static partial class DirectoryHelper
 {
 
   /// <summary>
-  /// Returns file/directory entries names (not full paths), same as python`s os.listdir.
+  /// Повертае імена файлів і директорій (не повні шляхи).
   /// </summary>
   /// <param name="dirPath"></param>
   /// <returns></returns>
@@ -19,16 +19,15 @@ public static partial class DirectoryHelper
   public static string?[] FindFiles(string dirPath)
   {
     if (string.IsNullOrWhiteSpace(dirPath))
-      throw new ArgumentException("Directory path is required.", nameof(dirPath));
+      throw new ArgumentException($"'{dirPath}' взагалі не шлях!", nameof(dirPath));
 
-    // Check existence
     if (!Directory.Exists(dirPath))
     {
       Console.WriteLine($"Директорія '{dirPath}' не існує!");
       return [];
     }
 
-    // Check it is a directory
+    // Перевіряє, чи є воно директорією.
     var attrs = File.GetAttributes(dirPath);
     if (!attrs.HasFlag(FileAttributes.Directory))
     {
@@ -38,24 +37,24 @@ public static partial class DirectoryHelper
 
     try
     {
-      // Return only files, not directories
+      // Повертає тільки файли
       var files = Directory.GetFiles(dirPath);
 
       if (files.Length == 0)
-        Console.WriteLine("У директорії немає файлів.");
+        Console.WriteLine($"В директорії '{dirPath}' жодного файлу.");
 
       return [.. files.Select(Path.GetFileName)];
     }
     catch (Exception e)
     {
       Console.WriteLine($"Помилка при читанні директорії: {e.Message}");
-      return []; // unreachable, but keeps compiler happy
+      return []; // не має спрацювате, але компілятор вимагає
     }
   }
 
 
   /// <summary>
-  /// Returns: dictionary key = "YYYY-MM-DD", value = full path to the matching .xlsx file
+  /// Повертає словник в форматі {"YYYY-MM-DD" : повний шлях до .xlsx файлу}
   /// </summary>
   /// <param name="xlsxFiles"></param>
   /// <param name="directoryPath"></param>
@@ -91,14 +90,13 @@ public static partial class DirectoryHelper
         }
         catch (FormatException)
         {
-          // invalid date -> skip
           Console.WriteLine($"Помилка читання {fileName}.");
           continue;
         }
       }
     }
 
-    // Sort by keys (dates)
+    // Сортую ключі, як дати
     var sorted = dict.OrderBy(kv => kv.Key, StringComparer.Ordinal)
                       .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
 
@@ -110,7 +108,7 @@ public static partial class DirectoryHelper
 
 
   /// <summary>
-  /// Pattern: starts with 6 digits, then anything, then "-ШПС.xlsx" (case-insensitive)
+  /// Паттерн для перевірки імен файлів: вони мають починатись з 6 цифр і закінчуватись "-ШПС.xlsx"
   /// </summary>
   /// <returns></returns>
   [GeneratedRegex(@"^\d{6}.*\-ШПС\.xlsx$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
@@ -118,9 +116,9 @@ public static partial class DirectoryHelper
 
 
   /// <summary>
-  /// Returns a list containing all keys from the supplied dictionary.
+  /// Повертає одномірний масив ключів переданого словника.
   /// </summary>
-  /// <param name="dict">Dictionary whose keys are needed.</param>
+  /// <param name="dict">Словник, чиї ключі потрібні.</param>
   /// <returns>List of keys.</returns>
   public static string[] MakeArrayOfKeys(Dictionary<string, string> dict)
   {
