@@ -1,6 +1,7 @@
 namespace _260816_awards;
 
 using ClosedXML.Excel;
+using static XlsxRegexHelper;
 
 public class XlsxHandler
 {
@@ -8,17 +9,11 @@ public class XlsxHandler
   /// <summary>
   /// Головна структура даних, яка містить усі дані по кожному співпрацівнику
   /// </summary>
-  public sealed record Shpk
+  public sealed class Shpk
   {
-    public Dictionary<string, Person> PersonalData { get; init; }
+    public Dictionary<string, Person> PersonalData { get; } = [];
 
-    // Параметричний конструктор, який створює порожній словник.
-    public Shpk() : this([]) { }
-
-    private Shpk(Dictionary<string, Person> data) =>
-        PersonalData = data;
-
-    public void AddToShpk(string name, Person person) =>
+    public bool AddToShpk(string name, Person person) =>
         PersonalData.TryAdd(name, person);
 
   }
@@ -27,7 +22,7 @@ public class XlsxHandler
   /// <summary>
   /// Cтруктура даних що відпувідає за збереження інформації щодо кожної особи
   /// </summary>
-  public sealed record Person
+  public sealed class Person
   {
     public string Rank { get; set; }
     public string Department { get; set; }
@@ -35,7 +30,7 @@ public class XlsxHandler
     public string Vacation { get; set; }
     public string Note { get; set; }
 
-    public Dictionary<string, string> Awards { get; set; }
+    public Dictionary<string, string> Awards { get; init; }
 
     // "Простий" конструктор, який ініціалізує порожній словник.
     public Person()
@@ -51,8 +46,6 @@ public class XlsxHandler
     public void AddAward(string day, string status) =>
         Awards.TryAdd(day, status);
 
-    public void AddNote(string note) =>
-        Note = note;
   }
 
 
@@ -87,10 +80,12 @@ public class XlsxHandler
         }
         else
         {
+
           Person newPerson = new()
           {
             Rank = row.Cell(8).GetString(),                 // H
-            Department = row.Cell(11).GetString(),          // K
+            Department = GetCompany(
+                row.Cell(11).GetString(), cleanedName),     // K
             Ipn = row.Cell(15).GetString(),                 // O
             Vacation = row.Cell(24).GetString()             // X (Excel date)
           };
