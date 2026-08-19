@@ -14,7 +14,7 @@ public static partial class DirectoryHelper
   /// Повертае імена файлів і директорій (не повні шляхи).
   /// </summary>
   /// <param name="dirPath"></param>
-  /// <returns></returns>
+  /// <returns>Пустий або заповнений масив з іменами файлів.</returns>
   /// <exception cref="ArgumentException"></exception>
   public static string?[] FindFiles(string dirPath)
   {
@@ -27,7 +27,7 @@ public static partial class DirectoryHelper
       return [];
     }
 
-    // Перевіряє, чи є воно директорією.
+    // Перевіряє, чи є визначений об'єкт директорією.
     var attrs = File.GetAttributes(dirPath);
     if (!attrs.HasFlag(FileAttributes.Directory))
     {
@@ -58,7 +58,7 @@ public static partial class DirectoryHelper
   /// </summary>
   /// <param name="xlsxFiles"></param>
   /// <param name="directoryPath"></param>
-  /// <returns></returns>
+  /// <returns>Словник, який містить пари {'дата': 'ім`я файлу .xlsx'}.</returns>
   public static Dictionary<string, string> CheckMatching(string[] xlsxFiles, string directoryPath)
   {
     var pattern = FilePatternRegex();
@@ -119,7 +119,7 @@ public static partial class DirectoryHelper
   /// Повертає одномірний масив ключів переданого словника.
   /// </summary>
   /// <param name="dict">Словник, чиї ключі потрібні.</param>
-  /// <returns>List of keys.</returns>
+  /// <returns>Масив, створений з ключів переданого для обробки словника.</returns>
   public static string[] MakeArrayOfKeys(Dictionary<string, string> dict)
   {
     return [.. dict.Keys];

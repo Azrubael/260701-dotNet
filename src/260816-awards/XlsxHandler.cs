@@ -1,7 +1,6 @@
 namespace _260816_awards;
 
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
 using static XlsxRegexHelper;
 
 public class XlsxHandler
@@ -32,10 +31,10 @@ public class XlsxHandler
     public string Rank { get; set; }
     public string Department { get; set; }
     public string Ipn { get; set; }
-    public string Vacation { get; set; }
     public string Note { get; set; }
 
     public Dictionary<string, string> Awards { get; init; }
+    public List<(string Begin, string End)> AccuralPeriods { get; init; }
 
     // Простий конструктор, який ініціалізує порожній словник.
     public Person()
@@ -43,14 +42,58 @@ public class XlsxHandler
       Rank = string.Empty;
       Department = string.Empty;
       Ipn = string.Empty;
-      Vacation = string.Empty;
       Note = string.Empty;
       Awards = [];
+      AccuralPeriods = [];
       Count = Interlocked.Increment(ref _nextCount);
     }
 
     public void AddAward(string day, string status) =>
-        Awards.TryAdd(day, status);
+      Awards.TryAdd(day, status);
+
+    public void UpdateNote(string status, string vacation, string szch)
+    {
+      if (szch != string.Empty ||
+        (status.Contains("сзч") == true && (Note.Contains("сзч") == false)))
+      {
+        Note = "сзч";
+        return;
+      }
+      if (status.Contains("бр") == true && (Note.Contains("була бр") == false))
+      {
+        Note += ", була брка";
+        return;
+      }
+      if (vacation != string.Empty && Note.Contains("була відпустка") == false)
+      {
+        Note += ", була відпустка";
+        return;
+      }
+    }
+
+    public void DefineAccuralPeriods()
+    {
+      if (Awards.Count > 0)
+      {
+        List<string> currentInterval = [];
+        foreach ((string day, string status) in Awards)
+        {
+          if (status.Contains('+') == true)
+          {
+            currentInterval.Add(day);
+          }
+          else
+          {
+            if (currentInterval.Count != 0)
+            {
+              AccuralPeriods.Add((currentInterval[0], currentInterval[^1]));
+              currentInterval.Clear();
+            }
+          }
+        }
+      }
+
+    }
 
   }
 
@@ -58,6 +101,7 @@ public class XlsxHandler
   /// <summary>
   /// Очищає рядок від зайвих пробілів і переносів рядків.
   /// </summary>
+  /// <param name="fullName"></param>
   /// <returns>Повертає повертає «чисте» повне ПІБ або пустий рядок.</returns>
   public static string CleanFullName(string? fullName)
   {
@@ -104,10 +148,14 @@ public class XlsxHandler
         continue;
 
       string cleanedName = CleanFullName(fullName);
+      string currentStatus = row.Cell(19).GetString();
+      string currentVacation = row.Cell(24).GetString();
+      string szch = row.Cell(27).GetString();
 
       if (shpk.PersonalData.TryGetValue(cleanedName, out Person? person))
       {
-        person.AddAward(day, row.Cell(19).GetString());
+        person.AddAward(day, currentStatus);
+        person.UpdateNote(currentStatus, currentVacation, szch);
       }
       else
       {
@@ -117,9 +165,9 @@ public class XlsxHandler
           Department = GetCompany(
               row.Cell(11).GetString(), cleanedName),     // стовпчик K
           Ipn = row.Cell(15).GetString(),                 // стовпчик O
-          Vacation = row.Cell(24).GetString()             // стовпчик X
         };
-        newPerson.AddAward(day, row.Cell(19).GetString());
+        newPerson.AddAward(day, currentStatus);
+        newPerson.UpdateNote(currentStatus, currentVacation, szch);
         shpk.AddToShpk(cleanedName, newPerson);
       }
     }
@@ -130,13 +178,14 @@ public class XlsxHandler
   /// Зчитує файли *.xlsx визначеного формату і створює нову структуру даних
   /// для збереження в новому файлі звіту *.xlsx.
   /// </summary>
-  /// <param name="matchedFiles"></param>
-  /// <returns>Створений об'єкт XLWorkbook</returns>
+  /// <param name="dates"></param>
+  /// <param name="shpk"></param>
+  /// <returns>Створений двомірний масив для додавання до XLWorkbook</returns>
   public static List<object[]> CreateLongReportObj(string[] dates, Shpk shpk)
   {
     string[] header = ["# з/п", "Звання", "ПІБ", "Підрозділ", "РНОКПП", "Примітка"];
     List<object[]> longReportTable = [];
-    longReportTable.Add([$"Звіт стосовно нарахування премії з {dates[0]} по {dates[^1]}."]);
+    longReportTable.Add([$"Детальний звіт стосовно нарахування премії з {dates[0]} по {dates[^1]}."]);
     longReportTable.Add([.. header, .. dates]);
 
     foreach ((string name, Person person) in shpk.PersonalData)
@@ -153,13 +202,52 @@ public class XlsxHandler
         name,
         person.Department,
         person.Ipn,
-        person.Note,
+        person.Note.TrimStart(',', ' '),
         .. awards
-        // .. person.Awards.Values
         ]);
     }
 
     return longReportTable;
+  }
+
+  /// <summary>
+  /// Зчитує файли *.xlsx визначеного формату і створює нову структуру даних
+  /// для збереження в новому файлі звіту *.xlsx.
+  /// </summary>
+  /// <param name="shpk"></param>
+  /// <returns>Створений двомірний масив для додавання до XLWorkbook</returns>
+  public static List<object[]> CreateShortReportObj(string[] dates, Shpk shpk)
+  {
+    List<object[]> shortReportTable = [];
+    shortReportTable.Add([$"Скорочений звіт стосовно нарахування премії з {dates[0]} по {dates[^1]}."]);
+    string[] header = ["# з/п", "Звання", "ПІБ", "Підрозділ", "РНОКПП", "Примітка", "Початок", "Кінець"];
+    shortReportTable.Add([.. header]);
+
+    foreach ((string name, Person person) in shpk.PersonalData)
+    {
+      person.DefineAccuralPeriods();
+      string starts = string.Empty;
+      string finishes = string.Empty;
+
+      foreach ((string Begin, string End) in person.AccuralPeriods)
+      {
+        starts += $", {Begin}";
+        finishes += $", {End}";
+      }
+
+      shortReportTable.Add([
+        person.Count,
+        person.Rank,
+        name,
+        person.Department,
+        person.Ipn,
+        person.Note.TrimStart(',', ' '),
+        starts.TrimStart(',', ' '),
+        finishes.TrimStart(',', ' ')
+        ]);
+
+    }
+    return shortReportTable;
   }
 
 
@@ -188,29 +276,88 @@ public class XlsxHandler
 
 
   /// <summary>
-  /// Зберігає файл *.xlsx
+  /// Зберігає файл таблиці звіту longReportTable і shortReportTable до *.xlsx
   /// </summary>
-  /// <param name="wb"></param>
+  /// <param name="longReportTable"></param>
+  /// <param name="shortReportTable"></param>
   /// <param name="reportFilePath"></param>
-  public static void SaveXlsx(List<object[]> longReportTable, string reportFilePath)
+  public static void SaveXlsx(
+    List<object[]> longReportTable,
+    List<object[]> shortReportTable,
+    string reportFilePath)
   {
     try
     {
       using var wb = new XLWorkbook();
-      IXLWorksheet ws = wb.Worksheets.Add("LongReport");
+      IXLWorksheet ws1 = wb.Worksheets.Add("Детально");
+
+      int maxColumnCount = 0;
 
       for (int rowIndex = 0; rowIndex < longReportTable.Count; rowIndex++)
       {
         object[] row = longReportTable[rowIndex];
+        maxColumnCount = Math.Max(maxColumnCount, row.Length);
 
         for (int columnIndex = 0; columnIndex < row.Length; columnIndex++)
         {
           object? value = row[columnIndex];
 
-          ws.Cell(rowIndex + 1, columnIndex + 1).Value =
+          ws1.Cell(rowIndex + 1, columnIndex + 1).Value =
               value?.ToString() ?? string.Empty;
         }
       }
+
+      // Встановлення ширини для колонок.
+      ws1.Column(1).Width = 5.0;
+      if (maxColumnCount > 1)
+      {
+        ws1.Columns(2, maxColumnCount).AdjustToContents();
+      }
+
+      // Горизонтальне вирівнювання змісту по центру, починаючи з колонки D.
+      if (maxColumnCount >= 4)
+      {
+        ws1.Columns(4, maxColumnCount)
+          .Style
+          .Alignment
+          .Horizontal = XLAlignmentHorizontalValues.Center;
+      }
+
+      IXLWorksheet ws2 = wb.Worksheets.Add("Скорочено");
+
+      maxColumnCount = 0;
+      for (int rowIndex = 0; rowIndex < shortReportTable.Count; rowIndex++)
+      {
+        object[] row = shortReportTable[rowIndex];
+        maxColumnCount = Math.Max(maxColumnCount, row.Length);
+
+        for (int columnIndex = 0; columnIndex < row.Length; columnIndex++)
+        {
+          object? value = row[columnIndex];
+
+          ws2.Cell(rowIndex + 1, columnIndex + 1).Value =
+              value?.ToString() ?? string.Empty;
+        }
+      }
+
+      // Встановлення ширини для колонок.
+      ws2.Column(1).Width = 5.0;
+      if (maxColumnCount > 1)
+      {
+        ws2.Columns(2, maxColumnCount).AdjustToContents();
+      }
+
+      // Горизонтальне вирівнювання змісту по центру, починаючи з колонки D.
+      if (maxColumnCount >= 4)
+      {
+        ws2.Columns(4, maxColumnCount)
+          .Style
+          .Alignment
+          .Horizontal = XLAlignmentHorizontalValues.Center;
+      }
+
+      ws1.Cell("A1").Style.Font.Bold = true;
+      ws2.Cell("A1").Style.Font.Bold = true;
 
       wb.SaveAs(reportFilePath);
       Console.WriteLine($"Файл {reportFilePath} успішно збережений.");

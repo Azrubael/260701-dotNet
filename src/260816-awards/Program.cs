@@ -52,12 +52,13 @@ class Program
 
 
     List<object[]> longReportTable = CreateLongReportObj(dates, shpk);
+    List<object[]> shortReportTable = CreateShortReportObj(dates, shpk);
 
     DateTime now = DateTime.Now;
     string newFileName =
         $"{now.ToString("yyMMdd", CultureInfo.InvariantCulture)}-звіт_премії.xlsx";
 
-    SaveXlsx(longReportTable,  Path.Combine(directoryPath, newFileName));
+    SaveXlsx(longReportTable, shortReportTable, Path.Combine(directoryPath, newFileName));
 
   }
 
