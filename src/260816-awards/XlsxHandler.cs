@@ -1,6 +1,7 @@
 namespace _260816_awards;
 
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 using static XlsxRegexHelper;
 
 public class XlsxHandler
@@ -25,6 +26,9 @@ public class XlsxHandler
   /// </summary>
   public sealed class Person
   {
+    private static int _nextCount;
+
+    public int Count { get; }
     public string Rank { get; set; }
     public string Department { get; set; }
     public string Ipn { get; set; }
@@ -33,7 +37,7 @@ public class XlsxHandler
 
     public Dictionary<string, string> Awards { get; init; }
 
-    // "Простий" конструктор, який ініціалізує порожній словник.
+    // Простий конструктор, який ініціалізує порожній словник.
     public Person()
     {
       Rank = string.Empty;
@@ -42,6 +46,7 @@ public class XlsxHandler
       Vacation = string.Empty;
       Note = string.Empty;
       Awards = [];
+      Count = Interlocked.Increment(ref _nextCount);
     }
 
     public void AddAward(string day, string status) =>
@@ -51,10 +56,9 @@ public class XlsxHandler
 
 
   /// <summary>
-  /// Очищає рядок і повертає «чисте» повне ім'я.
-  /// Якщо вхідний рядок null, порожній або містить лише пробіли,
-  /// повертає порожній рядок (не null).
+  /// Очищає рядок від зайвих пробілів і переносів рядків.
   /// </summary>
+  /// <returns>Повертає повертає «чисте» повне ПІБ або пустий рядок.</returns>
   public static string CleanFullName(string? fullName)
   {
     if (string.IsNullOrWhiteSpace(fullName))
@@ -83,13 +87,15 @@ public class XlsxHandler
   /// <param name="shpk"></param>
   public static void ReadShpk(string day, string shpkFilePath, Shpk shpk)
   {
-
-    IXLWorksheet? ws = ReadFileShpkSheet(shpkFilePath)
+    XLWorkbook? wb = ReadFileShpkBook(shpkFilePath)
         ?? throw new InvalidOperationException(
-          $"Аркуш 'ШПС' в файлі {shpkFilePath} відсутній.");
+          $"Файл {shpkFilePath} не відповідає формату xlsx.");
+
+    IXLWorksheet? ws = wb.Worksheet("ШПС")
+        ?? throw new InvalidOperationException(
+          $"В файлі {shpkFilePath} не знайдено аркуш 'ШПС'."); ;
 
     string fullName;
-
     for (int rowNum = 4; rowNum <= 630; rowNum++)
     {
       IXLRow? row = ws.Row(rowNum);
@@ -117,27 +123,61 @@ public class XlsxHandler
         shpk.AddToShpk(cleanedName, newPerson);
       }
     }
-
-
   }
 
 
-  public static XLWorkbook CreateLongReportObj(Dictionary<string, string> matchedFiles)
+  /// <summary>
+  /// Зчитує файли *.xlsx визначеного формату і створює нову структуру даних
+  /// для збереження в новому файлі звіту *.xlsx.
+  /// </summary>
+  /// <param name="matchedFiles"></param>
+  /// <returns>Створений об'єкт XLWorkbook</returns>
+  public static List<object[]> CreateLongReportObj(string[] dates, Shpk shpk)
   {
-    using var wb = new XLWorkbook();
+    string[] header = ["# з/п", "Звання", "ПІБ", "Підрозділ", "РНОКПП", "Примітка"];
+    List<object[]> longReportTable = [];
+    longReportTable.Add([$"Звіт стосовно нарахування премії з {dates[0]} по {dates[^1]}."]);
+    longReportTable.Add([.. header, .. dates]);
 
-    IXLWorksheet ws = wb.Worksheets.Add("LongReport");
-    return wb;
+    foreach ((string name, Person person) in shpk.PersonalData)
+    {
+      string[]? awards = new string[dates.Length];
+      for (int i = 0; i < dates.Length; i++)
+      {
+        awards[i] = person.Awards.GetValueOrDefault(dates[i], "немає");
+      }
+
+      longReportTable.Add([
+        person.Count,
+        person.Rank,
+        name,
+        person.Department,
+        person.Ipn,
+        person.Note,
+        .. awards
+        // .. person.Awards.Values
+        ]);
+    }
+
+    return longReportTable;
   }
 
 
-  public static IXLWorksheet? ReadFileShpkSheet(string xlsxFilePath)
+  /// <summary>
+  /// Читає xlsx файл, в якому має бути аркуш "ШПС".
+  /// </summary>
+  /// <param name="xlsxFilePath"></param>
+  /// <returns>Повертає зчитаний аркуш xlsx в форматі об'єкту IXLWorksheet або null.</returns>
+  public static XLWorkbook? ReadFileShpkBook(string xlsxFilePath)
   {
     try
     {
-      using XLWorkbook? wb = new(xlsxFilePath);
-      IXLWorksheet ws = wb.Worksheet("ШПС");
-      return ws;
+      if (!File.Exists(xlsxFilePath))
+      {
+        return null;
+      }
+
+      return new XLWorkbook(xlsxFilePath);
     }
     catch (Exception e)
     {
@@ -146,12 +186,35 @@ public class XlsxHandler
     }
   }
 
-  public static void SaveXlsx(XLWorkbook wb, string reportFilePath)
+
+  /// <summary>
+  /// Зберігає файл *.xlsx
+  /// </summary>
+  /// <param name="wb"></param>
+  /// <param name="reportFilePath"></param>
+  public static void SaveXlsx(List<object[]> longReportTable, string reportFilePath)
   {
     try
     {
+      using var wb = new XLWorkbook();
+      IXLWorksheet ws = wb.Worksheets.Add("LongReport");
+
+      for (int rowIndex = 0; rowIndex < longReportTable.Count; rowIndex++)
+      {
+        object[] row = longReportTable[rowIndex];
+
+        for (int columnIndex = 0; columnIndex < row.Length; columnIndex++)
+        {
+          object? value = row[columnIndex];
+
+          ws.Cell(rowIndex + 1, columnIndex + 1).Value =
+              value?.ToString() ?? string.Empty;
+        }
+      }
+
       wb.SaveAs(reportFilePath);
       Console.WriteLine($"Файл {reportFilePath} успішно збережений.");
+
     }
     catch (Exception e)
     {

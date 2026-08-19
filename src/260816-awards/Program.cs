@@ -1,5 +1,6 @@
 ﻿namespace _260816_awards;
 
+using System.Globalization;
 using static DirectoryHelper;
 using static XlsxHandler;
 
@@ -34,21 +35,30 @@ class Program
     string[] dates = MakeArrayOfKeys(matchedFiles);
 
     Shpk shpk = new();
-    foreach((string day, string shpkPath) in matchedFiles)
+    foreach ((string day, string shpkPath) in matchedFiles)
     {
       ReadShpk(day, shpkPath, shpk);
       Console.WriteLine($"Оброблено дані за {day}");
     }
 
-    foreach((string k, Person v) in shpk.PersonalData)
-    {
-      Console.WriteLine(k);
-      foreach(var p in v.Awards)
-      {
-        Console.WriteLine(p);
-      }
-    }
-  }
+    // foreach((string k, Person v) in shpk.PersonalData)
+    // {
+    //   Console.WriteLine(k);
+    //   foreach(var p in v.Awards)
+    //   {
+    //     Console.WriteLine(p);
+    //   }
+    // }
 
+
+    List<object[]> longReportTable = CreateLongReportObj(dates, shpk);
+
+    DateTime now = DateTime.Now;
+    string newFileName =
+        $"{now.ToString("yyMMdd", CultureInfo.InvariantCulture)}-звіт_премії.xlsx";
+
+    SaveXlsx(longReportTable,  Path.Combine(directoryPath, newFileName));
+
+  }
 
 }

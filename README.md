@@ -25,7 +25,7 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
     -c Release — збірка у режимі релізу (оптимізовано для швидкості та розміру).
     -r win-x64 — збірка для 64-бітної Windows.
     --self-contained true — включає всі необхідні бібліотеки у вихідний файл (не потрібно встановлювати .NET на цільовій машині).
-    -p:PublishSingleFile=true — збирає усе у один .exe файл.
+    -p:PublishSingleFile=true — збирає усе в один .exe файл.
     -p:PublishTrimmed=true — видаляє зайвий код для зменшення розміру.
 
 
