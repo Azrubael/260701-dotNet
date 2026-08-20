@@ -100,8 +100,8 @@ public static partial class DirectoryHelper
     var sorted = dict.OrderBy(kv => kv.Key, StringComparer.Ordinal)
                       .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
 
-    Console.WriteLine("Знайдені файли .xlsx (відсортовані за датою):");
-    foreach (var (k, v) in sorted) Console.WriteLine($"{k}: {v}");
+    // Console.WriteLine("Знайдені файли .xlsx (відсортовані за датою):");
+    // foreach (var (k, v) in sorted) Console.WriteLine($"{k}: {v}");
 
     return sorted;
   }

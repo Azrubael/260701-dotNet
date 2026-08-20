@@ -20,7 +20,6 @@ class Program
       Environment.Exit(1);
     }
 
-    // filesList.ToList().ForEach(Console.WriteLine);
     xlsxFiles = [.. filesList
         .Where(f => f != null)    // Відкилає елементи null
         .Select(f => f!)];
@@ -38,17 +37,7 @@ class Program
     foreach ((string day, string shpkPath) in matchedFiles)
     {
       ReadShpk(day, shpkPath, shpk);
-      Console.WriteLine($"Оброблено дані за {day}");
     }
-
-    // foreach((string k, Person v) in shpk.PersonalData)
-    // {
-    //   Console.WriteLine(k);
-    //   foreach(var p in v.Awards)
-    //   {
-    //     Console.WriteLine(p);
-    //   }
-    // }
 
 
     List<object[]> longReportTable = CreateLongReportObj(dates, shpk);

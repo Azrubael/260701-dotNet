@@ -51,50 +51,60 @@ public class XlsxHandler
     public void AddAward(string day, string status) =>
       Awards.TryAdd(day, status);
 
+    /// <summary>
+    /// Визначення змісту для поля "Примітка" в звітах.
+    /// </summary>
+    /// <param name="status"></param>
+    /// <param name="vacation"></param>
+    /// <param name="szch"></param>
     public void UpdateNote(string status, string vacation, string szch)
     {
-      if (szch != string.Empty ||
-        (status.Contains("сзч") == true && (Note.Contains("сзч") == false)))
+      if (!string.IsNullOrEmpty(szch) || (status.Contains("сзч") && !Note.Contains("сзч")))
       {
         Note = "сзч";
         return;
       }
-      if (status.Contains("бр") == true && (Note.Contains("була бр") == false))
+      if (status.Contains("бр") && !Note.Contains("була бр"))
       {
         Note += ", була брка";
         return;
       }
-      if (vacation != string.Empty && Note.Contains("була відпустка") == false)
+      if (!string.IsNullOrEmpty(vacation) && !Note.Contains("була відпустка"))
       {
         Note += ", була відпустка";
         return;
       }
     }
 
+    /// <summary>
+    /// Визначення періодів нарахування премії 10к.
+    /// </summary>
     public void DefineAccuralPeriods()
     {
-      if (Awards.Count > 0)
+      string? periodStart = null;
+      string? periodEnd = null;
+
+      foreach ((string day, string status) in Awards)
       {
-        List<string> currentInterval = [];
-        foreach ((string day, string status) in Awards)
+        if (status.Contains('+'))
         {
-          if (status.Contains('+') == true)
-          {
-            currentInterval.Add(day);
-          }
-          else
-          {
-            if (currentInterval.Count != 0)
-            {
-              AccuralPeriods.Add((currentInterval[0], currentInterval[^1]));
-              currentInterval.Clear();
-            }
-          }
+          periodStart ??= day;
+          periodEnd = day;
+        }
+        else if (periodStart is not null && periodEnd is not null)
+        {
+          AccuralPeriods.Add((periodStart, periodEnd));
+          periodStart = null;
+          periodEnd = null;
         }
       }
 
+      // Додаємо період, якщо він закінчується останньою датою.
+      if (periodStart is not null && periodEnd is not null)
+      {
+        AccuralPeriods.Add((periodStart, periodEnd));
+      }
     }
-
   }
 
 
@@ -131,20 +141,22 @@ public class XlsxHandler
   /// <param name="shpk"></param>
   public static void ReadShpk(string day, string shpkFilePath, Shpk shpk)
   {
-    XLWorkbook? wb = ReadFileShpkBook(shpkFilePath)
+    using XLWorkbook wb = ReadFileShpkBook(shpkFilePath)
         ?? throw new InvalidOperationException(
           $"Файл {shpkFilePath} не відповідає формату xlsx.");
 
-    IXLWorksheet? ws = wb.Worksheet("ШПС")
-        ?? throw new InvalidOperationException(
-          $"В файлі {shpkFilePath} не знайдено аркуш 'ШПС'."); ;
+    if (!wb.Worksheets.TryGetWorksheet("ШПС", out IXLWorksheet? ws))
+    {
+      throw new InvalidOperationException(
+        $"В файлі {shpkFilePath} не знайдено аркуш 'ШПС'.");
+    }
 
     string fullName;
     for (int rowNum = 4; rowNum <= 630; rowNum++)
     {
-      IXLRow? row = ws.Row(rowNum);
+      IXLRow row = ws.Row(rowNum);
       fullName = row.Cell(9).GetString();                 // стовпчик I
-      if (fullName == string.Empty)
+      if (string.IsNullOrWhiteSpace(fullName))
         continue;
 
       string cleanedName = CleanFullName(fullName);
@@ -226,8 +238,8 @@ public class XlsxHandler
     foreach ((string name, Person person) in shpk.PersonalData)
     {
       person.DefineAccuralPeriods();
-      string starts = string.Empty;
-      string finishes = string.Empty;
+      string starts = "";
+      string finishes = "";
 
       foreach ((string Begin, string End) in person.AccuralPeriods)
       {
