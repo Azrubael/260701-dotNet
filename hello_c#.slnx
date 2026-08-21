@@ -18,4 +18,5 @@
   <Project Path="src/mslearn8-Arrays/mslearn8-Arrays.csproj" />
   <Project Path="src/mslearn9-PetStore/mslearn9-PetStore.csproj" />
   <Project Path="src/260816-awards/260816-awards.csproj" />
+  <Project Path="src/avalonia1-tutorial/avalonia1-tutorial.csproj" />
 </Solution>
