@@ -10,25 +10,28 @@ class Program
 
   static void Main()
   {
-    string directoryPath = "d:/tmp/experiment/";
+    // string directoryPath = "d:/tmp/experiment/";
+    string directoryPath = Directory.GetCurrentDirectory();
     string?[] filesList = FindFiles(directoryPath);
     string[] xlsxFiles = [];
 
     if (filesList.Length == 0)
     {
-      Console.WriteLine($"Директорія {directoryPath} взагалі не містить жодного файлу.");
+      Console.WriteLine($"Директорія {directoryPath} взагалі не містить" +
+          " жодного файлу.");
       Environment.Exit(1);
     }
 
     xlsxFiles = [.. filesList
-        .Where(f => f != null)    // Відкилає елементи null
+        .Where(f => f != null)
         .Select(f => f!)];
 
     // Залишає тількі підходящі імена файлів
     Dictionary<string, string> matchedFiles = CheckMatching(xlsxFiles, directoryPath);
     if (matchedFiles.Count == 0)
     {
-      Console.WriteLine($"Директорія {directoryPath} не містить жодного файлу, що підходить.");
+      Console.WriteLine($"Директорія {directoryPath} не містить" +
+          " жодного файлу, що підходить.");
       Environment.Exit(1);
     }
     string[] dates = MakeArrayOfKeys(matchedFiles);
@@ -39,16 +42,15 @@ class Program
       ReadShpk(day, shpkPath, shpk);
     }
 
-
-    List<object[]> longReportTable = CreateLongReportObj(dates, shpk);
-    List<object[]> shortReportTable = CreateShortReportObj(dates, shpk);
-
     DateTime now = DateTime.Now;
-    string newFileName =
-        $"{now.ToString("yyMMdd", CultureInfo.InvariantCulture)}-звіт_премії.xlsx";
+    string newFileName = now.ToString("yyMMdd", CultureInfo.InvariantCulture) +
+        "-звіт_премії.xlsx";
 
-    SaveXlsx(longReportTable, shortReportTable, Path.Combine(directoryPath, newFileName));
-
+    SaveXlsx(
+        CreateLongReportObj(dates, shpk),
+        CreateShortReportObj(dates, shpk),
+        Path.Combine(directoryPath, newFileName)
+        );
   }
 
 }

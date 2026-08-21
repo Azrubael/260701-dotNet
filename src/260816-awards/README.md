@@ -15,7 +15,7 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 ## To publish for Windows x64:
 ```powershell
 dotnet clean
-dotnet publish -c Release -r win-x64 --self-contained true
+dotnet publish -c Release -r win-x64
 ```
 
 The executable will be located under:
