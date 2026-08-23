@@ -7,16 +7,19 @@ dotnet add package ClosedXML
 *EPPlus*: Often stronger when you need finer control or support for more of Excel’s richer features and edge cases (depending on version), such as complex formatting, charts, and certain advanced structures.
 
 
-## To assembly the project into a single binary for Windows
+## To assembly the project into a single JIT binary for Windows
 ```powershell
+dotnet clean
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true
 ```
 
-## To publish for Windows x64:
+Використання параметра -p:PublishAot=true замість PublishTrimmed змусить компілятор C# перетворити код одразу в машинний, як це робить Go. Це значно зменшить розмір файлу та прискорить запуск, оскільки програмі більше не знадобиться JIT-компілятор і велика частина інфраструктури CLR. NativeAOT працює інакше, ніж стандартна компіляція C#. Для цього процесу (лінкування) .NET використовує native linker від Microsoft Visual C++ (MSVC).
+## To assembly the project into a tiny binary for Windows with Microsoft Visual C++ (MSVC)
 ```powershell
 dotnet clean
-dotnet publish -c Release -r win-x64
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishAot=true
 ```
+
 
 The executable will be located under:
 bin\Release\net10.0\win-x64\publish\
