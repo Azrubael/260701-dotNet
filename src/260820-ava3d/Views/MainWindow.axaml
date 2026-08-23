@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:_260820_ava3d.ViewModels"
+        xmlns:local="clr-namespace:_260820_ava3d"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="_260820_ava3d.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="3D PDF Viewer"
+        Width="800" Height="600">
+
+    <DockPanel>
+
+        <!-- Top Navigation Menu -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Click="OnOpenClick" />
+                <MenuItem Header="_Exit" Click="OnExitClick" />
+            </MenuItem>
+
+            <MenuItem Header="_Manipulate">
+                <MenuItem Header="Zoom In" />
+                <MenuItem Header="Zoom Out" />
+                <MenuItem Header="Pan" />
+                <MenuItem Header="Rotate X" />
+                <MenuItem Header="Rotate Y" />
+                <MenuItem Header="Rotate Z" />
+            </MenuItem>
+
+            <MenuItem Header="_Help">
+                <MenuItem Header="FAQ" />
+                <MenuItem Header="About" />
+            </MenuItem>
+        </Menu>
+
+        <!-- 3D Render Area -->
+        <!-- <Panel Background="White">
+            <TextBlock Text="3D Render Viewport"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="LightGray" />
+        </Panel> -->
+        <local:Pdf3DViewport />
+    </DockPanel>
+
+
+
+
+</Window>
