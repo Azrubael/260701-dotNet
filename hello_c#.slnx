@@ -20,4 +20,5 @@
   <Project Path="src/260816-awards/260816-awards.csproj" />
   <Project Path="src/260820-ava3d/260820-ava3d.csproj" />
   <Project Path="src/avalonia1-tutorial/avalonia1-tutorial.csproj" />
+  <Project Path="src/mslearn10-PetStore/mslearn10-PetStore.csproj" />
 </Solution>

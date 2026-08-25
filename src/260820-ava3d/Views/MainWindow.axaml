@@ -17,6 +17,7 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Click="OnOpenClick" />
+                <MenuItem Header="_Saveprc" Click="OnSaveprcClick" />
                 <MenuItem Header="_Exit" Click="OnExitClick" />
             </MenuItem>
 
