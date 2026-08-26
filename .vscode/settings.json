@@ -7,10 +7,11 @@
 	"editor.lineHighlightBorder": "#C9C9C9"       // grey border
 	},
 
-  // Use tabs instead of spaces
+  // Use spaces instead of tabs
   "editor.insertSpaces": true,
-
   // Set tab size to 2 spaces
   "editor.tabSize":2,
+
   "files.trimTrailingWhitespace": true,
+	"editor.parameterHints.enabled": true
 }
