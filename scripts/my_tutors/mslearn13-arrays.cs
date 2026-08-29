@@ -46,3 +46,14 @@ foreach (var pallet in pallets)
 {
     Console.WriteLine($"-- {pallet}");
 }
+
+// reverse each word in a message
+// reverse the order of chars in a message
+string pangram = "The quick brown fox jumps over the lazy dog";
+string[] words = pangram.Split(' ');
+Array.Reverse(words);
+Console.WriteLine(string.Join(" ", words));
+
+char[] charsArray = pangram.ToCharArray();
+Array.Reverse(charsArray);
+Console.WriteLine(charsArray);

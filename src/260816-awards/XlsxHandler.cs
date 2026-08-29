@@ -163,11 +163,17 @@ public class XlsxHandler
       string currentStatus = row.Cell(19).GetString();
       string currentVacation = row.Cell(24).GetString();
       string szch = row.Cell(27).GetString();
+      string ipn = row.Cell(15).GetString();
 
       if (shpk.PersonalData.TryGetValue(cleanedName, out Person? person))
       {
         person.AddAward(day, currentStatus);
         person.UpdateNote(currentStatus, currentVacation, szch);
+        if (string.IsNullOrWhiteSpace(person.Ipn) &&
+          !string.IsNullOrWhiteSpace(ipn))
+        {
+          person.Ipn = ipn;
+        }
       }
       else
       {
@@ -176,7 +182,7 @@ public class XlsxHandler
           Rank = row.Cell(8).GetString(),                 // стовпчик H
           Department = GetCompany(
               row.Cell(11).GetString(), cleanedName),     // стовпчик K
-          Ipn = row.Cell(15).GetString(),                 // стовпчик O
+          Ipn = ipn,                 // стовпчик O
         };
         newPerson.AddAward(day, currentStatus);
         newPerson.UpdateNote(currentStatus, currentVacation, szch);
