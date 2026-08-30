@@ -22,4 +22,5 @@
   <Project Path="src/avalonia1-tutorial/avalonia1-tutorial.csproj" />
   <Project Path="src/mslearn10-PetStore/mslearn10-PetStore.csproj" />
   <Project Path="src/mslearn11-TypeConversion/mslearn11-TypeConversion.csproj" />
+  <Project Path="src/game_donut/game_donut.csproj" />
 </Solution>
