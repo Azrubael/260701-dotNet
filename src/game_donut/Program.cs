@@ -23,14 +23,14 @@ class Program
     PressKey();
     while (true)
     {
-      for (int m = 0; m < width ; m++)
+      for (int m = 0; m < width; m++)
       {
         double t = Math.Sin(m * 0.1);
         DrawScreen(outputConsole, width, height, t);
       }
       PressKey();
-    };
-
+    }
+    ;
   }
 
 
@@ -38,6 +38,8 @@ class Program
   {
     var frame = new StringBuilder(width * height + height);
     double aspect = (double)width / height / 2;
+    char[] gradient = " .:!=a#%$@".ToCharArray();
+    int gradientSize = gradient.Length - 2;
 
     for (int row = 0; row < height; row++)
     {
@@ -45,10 +47,14 @@ class Program
       {
         double x = ((double)col / width * 2.0 - 1.0) * aspect + t;
         double y = (double)row / height * 2.0 - 1.0;
+        double dist = Math.Sqrt(x * x + y * y);
+        int color = (int)(1.0 / dist);
+        if (color < 0) color = 0;
+        else if (color > gradientSize) color = gradientSize;
         frame.Append(
             (x * x + y * y > 0.5)
             ? outputConsole[col, row]
-            : '@'
+            : gradient[color]
             );
       }
       if (row < height - 1)
