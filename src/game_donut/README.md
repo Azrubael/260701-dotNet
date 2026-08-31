@@ -1,0 +1,1 @@
+A bit more perfect console application that draws a painted alphanumerical circle.
