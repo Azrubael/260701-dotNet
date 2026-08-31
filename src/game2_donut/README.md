@@ -1,0 +1,1 @@
+A simple console application that draws a circle painted in gradient color palette.
