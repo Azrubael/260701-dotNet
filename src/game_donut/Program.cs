@@ -3,7 +3,6 @@
 using System.Threading;
 using System.Text;
 using static System.Console;
-using System.Security.Claims;
 
 class Program
 {
@@ -66,8 +65,7 @@ class Program
   }
 
 
-  static int Clamp(double value, double min, double max)
-  {
-    return (int)Math.Max(Math.Min(value, max), min);
-  }
+  static int Clamp(double value, double min, double max) =>
+      (int)Math.Max(Math.Min(value, max), min);
+
 }
