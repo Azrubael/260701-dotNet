@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using avalonia1_tutorial.Views;
 
 namespace avalonia1_tutorial;
 

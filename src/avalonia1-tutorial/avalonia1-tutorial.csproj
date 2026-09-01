@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RootNamespace>avalonia1_tutorial</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
