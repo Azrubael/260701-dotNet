@@ -7,6 +7,32 @@ using static System.Console;
 
 class Program
 {
+  struct Coordinate3D(double x, double y, double z)
+  {
+    public double X = x, Y = y, Z = z;
+
+    public readonly double Magnitude() => Math.Sqrt(X * X + Y * Y + Z * Z);
+
+    public readonly Coordinate3D Normalize()
+    {
+      double mag = Magnitude();
+      return new Coordinate3D(X / mag, Y / mag, Z / mag);
+    }
+
+    public readonly double DotProduct(Coordinate3D other) =>
+        X * other.X + Y * other.Y + Z * other.Z;
+
+    public static Coordinate3D operator +(Coordinate3D a, Coordinate3D b) =>
+        new(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+
+    public static Coordinate3D operator -(Coordinate3D a, Coordinate3D b) =>
+        new(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+
+    public static Coordinate3D operator *(Coordinate3D v, double scalar) =>
+        new(v.X * scalar, v.Y * scalar, v.Z * scalar);
+  }
+
+
   static void Main()
   {
     int width = WindowWidth;
@@ -53,21 +79,11 @@ class Program
 
         if (sphereMode)
         {
-          DrawSphere(
-              gradient,
-              width,
-              height,
-              lightAngle
-          );
+          DrawSphere(gradient, width, height, lightAngle);
         }
         else
         {
-          DrawTorus(
-              gradient,
-              width,
-              height,
-              lightAngle
-          );
+          DrawTorus(gradient, width, height, lightAngle);
         }
 
         lightAngle += 0.06;
@@ -100,25 +116,18 @@ class Program
       }
     }
 
-    /*
-     * Donut dimensions:
-     *
-     * R = distance from the center of the donut
-     * r = radius of the donut tube
-     */
     double R = 0.9;
     double r = 0.37;
 
-    // The light travels around the donut.
-    double lightX = 2.0 * Math.Cos(lightAngle);
-    double lightY = 1.4 * Math.Sin(lightAngle * 0.8);
-    double lightZ = 2.0 * Math.Sin(lightAngle);
+    Coordinate3D lightPos = new(
+        2.0 * Math.Cos(lightAngle),
+        1.4 * Math.Sin(lightAngle * 0.8),
+        2.0 * Math.Sin(lightAngle)
+    );
 
-    // Number of points used to construct the donut.
     int majorSteps = 160;
     int minorSteps = 48;
 
-    // Fixed rotation of the donut so that its hole is visible.
     double rotationX = 0.65;
     double rotationZ = -0.25;
 
@@ -127,7 +136,6 @@ class Program
     double cosZ = Math.Cos(rotationZ);
     double sinZ = Math.Sin(rotationZ);
 
-    // Scale values map 3D coordinates to console coordinates.
     double scaleX = width * 0.34;
     double scaleY = height * 0.42;
 
@@ -139,110 +147,63 @@ class Program
       {
         double v = 2.0 * Math.PI * j / minorSteps;
 
-        // Point on the torus before rotation.
         double tube = R + r * Math.Cos(v);
 
-        double x = tube * Math.Cos(u);
-        double y = tube * Math.Sin(u);
-        double z = r * Math.Sin(v);
-
-        // Normal of the torus at this point.
-        double nx = Math.Cos(v) * Math.Cos(u);
-        double ny = Math.Cos(v) * Math.Sin(u);
-        double nz = Math.Sin(v);
-
-        // Rotate point around the X axis.
-        double rotatedY = y * cosX - z * sinX;
-        double rotatedZ = y * sinX + z * cosX;
-
-        y = rotatedY;
-        z = rotatedZ;
-
-        // Rotate point around the Z axis.
-        double rotatedX = x * cosZ - y * sinZ;
-        rotatedY = x * sinZ + y * cosZ;
-
-        x = rotatedX;
-        y = rotatedY;
-
-        // Rotate the normal in exactly the same way.
-        rotatedY = ny * cosX - nz * sinX;
-        double normalZ = ny * sinX + nz * cosX;
-
-        ny = rotatedY;
-        nz = normalZ;
-
-        rotatedX = nx * cosZ - ny * sinZ;
-        rotatedY = nx * sinZ + ny * cosZ;
-
-        nx = rotatedX;
-        ny = rotatedY;
-
-        /*
-         * Convert the 3D point to a console position.
-         * Console characters are taller than they are wide,
-         * so X and Y use different scale values.
-         */
-        int screenX = (int)(width / 2.0 + x * scaleX);
-        int screenY = (int)(height / 2.0 - y * scaleY);
-
-        if (screenX < 0 ||
-            screenX >= width ||
-            screenY < 0 ||
-            screenY >= height)
-        {
-          continue;
-        }
-
-        // Direction from the surface point to the light.
-        double lightDirectionX = lightX - x;
-        double lightDirectionY = lightY - y;
-        double lightDirectionZ = lightZ - z;
-
-        double lightDistance = Distance3D(
-            lightDirectionX,
-            lightDirectionY,
-            lightDirectionZ
+        Coordinate3D point = new(
+            tube * Math.Cos(u),
+            tube * Math.Sin(u),
+            r * Math.Sin(v)
         );
 
-        lightDirectionX /= lightDistance;
-        lightDirectionY /= lightDistance;
-        lightDirectionZ /= lightDistance;
+        Coordinate3D normal = new(
+            Math.Cos(v) * Math.Cos(u),
+            Math.Cos(v) * Math.Sin(u),
+            Math.Sin(v)
+        );
 
-        /*
-         * Lambertian diffuse lighting:
-         *
-         * The surface is brighter when its normal points
-         * toward the moving light source.
-         */
-        double diffuse =
-            nx * lightDirectionX +
-            ny * lightDirectionY +
-            nz * lightDirectionZ;
+        // Rotate around X axis
+        double ry = point.Y * cosX - point.Z * sinX;
+        double rz = point.Y * sinX + point.Z * cosX;
+        point = new(point.X, ry, rz);
 
-        diffuse = Math.Max(0.0, diffuse);
+        double nry = normal.Y * cosX - normal.Z * sinX;
+        double nrz = normal.Y * sinX + normal.Z * cosX;
+        normal = new(normal.X, nry, nrz);
 
-        // A small amount of ambient light prevents the dark
-        // side of the donut from disappearing completely.
+        // Rotate around Z axis
+        double rx = point.X * cosZ - point.Y * sinZ;
+        ry = point.X * sinZ + point.Y * cosZ;
+        point = new(rx, ry, point.Z);
+
+        rx = normal.X * cosZ - normal.Y * sinZ;
+        ry = normal.X * sinZ + normal.Y * cosZ;
+        normal = new(rx, ry, normal.Z);
+
+        int screenX = (int)(width / 2.0 + point.X * scaleX);
+        int screenY = (int)(height / 2.0 - point.Y * scaleY);
+
+        if (screenX < 0 || screenX >= width || screenY < 0 || screenY >= height)
+          continue;
+
+        Coordinate3D toLight = lightPos - point;
+        double lightDist = toLight.Magnitude();
+        toLight = toLight.Normalize();
+
+        double diffuse = Math.Max(0.0, normal.DotProduct(toLight));
         double light = 0.10 + diffuse * 0.90;
 
-        // Add a mild distance falloff for a more realistic
-        // moving point light.
-        double falloff = 1.0 / (1.0 + lightDistance * 0.12);
+        double falloff = 1.0 / (1.0 + lightDist * 0.12);
         light *= falloff;
 
-        // Convert brightness to an index in the ASCII gradient.
         int gradientIndex = Clamp(
             light * (gradient.Length - 1),
             0,
             gradient.Length - 1
         );
 
-        // Depth buffering ensures that the front surface
-        // hides the back surface.
-        if (z > depthBuffer[screenY, screenX])
+        if (point.Z > depthBuffer[screenY, screenX])
         {
-          depthBuffer[screenY, screenX] = z;
+          depthBuffer[screenY, screenX] = point.Z;
           brightness[screenY, screenX] = gradientIndex;
         }
       }
@@ -276,163 +237,54 @@ class Program
   {
     var frame = new StringBuilder(width * height + height);
 
-    // The camera looks toward positive Z.
     double cameraZ = -3.0;
     double sphereRadius = 1.0;
-
-    // Console characters are taller than they are wide.
-    // This aspect correction keeps the sphere circular.
     double aspect = (double)width / height / 2.0;
 
-    /*
-     * Moving point-light position.
-     * The negative Z value keeps most of the light on the
-     * visible side of the sphere.
-     */
-    double lightX = 2.0 * Math.Cos(lightAngle);
-    double lightY = 1.5 * Math.Sin(lightAngle * 0.8);
-    double lightZ = -2.0 + Math.Sin(lightAngle);
+    Coordinate3D lightPos = new(
+        2.0 * Math.Cos(lightAngle),
+        1.5 * Math.Sin(lightAngle * 0.8),
+        -2.0 + Math.Sin(lightAngle)
+    );
 
     for (int row = 0; row < height; row++)
     {
       for (int col = 0; col < width; col++)
       {
-        // Position on the projection plane at z = 0.
-        double screenX =
-            ((double)col / (width - 1) * 2.0 - 1.0) * aspect;
+        double screenX = ((double)col / (width - 1) * 2.0 - 1.0) * aspect;
+        double screenY = 1.0 - (double)row / (height - 1) * 2.0;
 
-        double screenY =
-            1.0 - (double)row / (height - 1) * 2.0;
+        Coordinate3D rayOrigin = new(0.0, 0.0, cameraZ);
+        Coordinate3D rayDir = new(screenX, screenY, -cameraZ);
+        rayDir = rayDir.Normalize();
 
-        // Ray starts at the camera and passes through
-        // the current screen position.
-        double originX = 0.0;
-        double originY = 0.0;
-        double originZ = cameraZ;
-
-        double directionX = screenX;
-        double directionY = screenY;
-        double directionZ = -cameraZ;
-
-        double directionLength = Distance3D(
-            directionX,
-            directionY,
-            directionZ
-        );
-
-        directionX /= directionLength;
-        directionY /= directionLength;
-        directionZ /= directionLength;
-
-        // Ray-sphere intersection,
-        // if the sphere is centered at (0, 0, 0).
-        double b =
-            2.0 * (
-                originX * directionX +
-                originY * directionY +
-                originZ * directionZ
-            );
-
-        double c =
-            originX * originX +
-            originY * originY +
-            originZ * originZ -
-            sphereRadius * sphereRadius;
-
+        double b = 2.0 * (rayOrigin.X * rayDir.X + rayOrigin.Y * rayDir.Y + rayOrigin.Z * rayDir.Z);
+        double c = rayOrigin.DotProduct(rayOrigin) - sphereRadius * sphereRadius;
         double discriminant = b * b - 4.0 * c;
 
-        // This ray does not hit the sphere.
         if (discriminant < 0.0)
         {
           frame.Append(' ');
           continue;
         }
 
-        // Use the closest intersection point.
-        double distance =
-            (-b - Math.Sqrt(discriminant)) / 2.0;
-
+        double distance = (-b - Math.Sqrt(discriminant)) / 2.0;
         if (distance < 0.0)
-        {
-          distance =
-              (-b + Math.Sqrt(discriminant)) / 2.0;
-        }
+          distance = (-b + Math.Sqrt(discriminant)) / 2.0;
 
-        // Calculate the point where the ray hits the sphere.
-        double hitX = originX + directionX * distance;
-        double hitY = originY + directionY * distance;
-        double hitZ = originZ + directionZ * distance;
+        Coordinate3D hitPoint = rayOrigin + rayDir * distance;
+        Coordinate3D normal = new(hitPoint.X / sphereRadius, hitPoint.Y / sphereRadius, hitPoint.Z / sphereRadius);
 
-        // Sphere normal.
-        double normalX = hitX / sphereRadius;
-        double normalY = hitY / sphereRadius;
-        double normalZ = hitZ / sphereRadius;
-
-        // Direction from the surface point to the light.
-        double lightDirectionX = lightX - hitX;
-        double lightDirectionY = lightY - hitY;
-        double lightDirectionZ = lightZ - hitZ;
-
-        double lightDistance =Distance3D(
-            lightDirectionX,
-            lightDirectionY,
-            lightDirectionZ
-        );
-
-        lightDirectionX /= lightDistance;
-        lightDirectionY /= lightDistance;
-        lightDirectionZ /= lightDistance;
-
-        // Diffuse lighting.
-        double diffuse =
-            normalX * lightDirectionX +
-            normalY * lightDirectionY +
-            normalZ * lightDirectionZ;
-
-        diffuse = Math.Max(0.0, diffuse);
-
-        // Ambient light keeps the dark side visible.
+        Coordinate3D toLight = (lightPos - hitPoint).Normalize();
+        double diffuse = Math.Max(0.0, normal.DotProduct(toLight));
         double brightness = 0.12 + diffuse * 0.88;
 
-        // Optional specular highlight.
-        double viewDirectionX = -hitX;
-        double viewDirectionY = -hitY;
-        double viewDirectionZ = cameraZ - hitZ;
-
-        double viewLength = Distance3D(
-            viewDirectionX,
-            viewDirectionY,
-            viewDirectionZ
-        );
-
-        viewDirectionX /= viewLength;
-        viewDirectionY /= viewLength;
-        viewDirectionZ /= viewLength;
-
-        // Reflection of the light direction around the normal.
-        double reflectionX =
-            2.0 * diffuse * normalX - lightDirectionX;
-
-        double reflectionY =
-            2.0 * diffuse * normalY - lightDirectionY;
-
-        double reflectionZ =
-            2.0 * diffuse * normalZ - lightDirectionZ;
-
-        double specular =
-            reflectionX * viewDirectionX +
-            reflectionY * viewDirectionY +
-            reflectionZ * viewDirectionZ;
-
-        specular = Math.Max(0.0, specular);
+        Coordinate3D toView = (rayOrigin - hitPoint).Normalize();
+        Coordinate3D reflection = normal * (2.0 * diffuse) - toLight;
+        double specular = Math.Max(0.0, reflection.DotProduct(toView));
         brightness += Math.Pow(specular, 24.0) * 0.35;
 
-        int gradientIndex = Clamp(
-            brightness * (gradient.Length - 1),
-            0,
-            gradient.Length - 1
-        );
-
+        int gradientIndex = Clamp(brightness * (gradient.Length - 1), 0, gradient.Length - 1);
         frame.Append(gradient[gradientIndex]);
       }
 
@@ -455,7 +307,4 @@ class Program
     );
   }
 
-
-  static double Distance3D(double x, double y, double z) =>
-      Math.Sqrt( x * x + y * y + z * z );
 }
