@@ -1,3 +1,4 @@
+```axaml
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:_260901_ava2d.ViewModels"
@@ -25,10 +26,37 @@
 
       <Polyline x:Name="SnakePath"
                 Stroke="#617E50"
-                StrokeThickness="15"
+                StrokeThickness="8"
                 StrokeLineCap="Round"
                 StrokeJoin="Round"
                 IsVisible="False" />
+
+      <Rectangle x:Name="Snake0"
+                 Width="15"
+                 Height="15"
+                 Fill="Black"
+                 IsVisible="False" />
+      <Rectangle x:Name="Snake1"
+                 Width="15"
+                 Height="15"
+                 Fill="#617E50"
+                 IsVisible="False" />
+      <Rectangle x:Name="Snake2"
+                 Width="15"
+                 Height="15"
+                 Fill="#617E50"
+                 IsVisible="False" />
+      <Rectangle x:Name="Snake3"
+                 Width="15"
+                 Height="15"
+                 Fill="#617E50"
+                 IsVisible="False" />
+      <Rectangle x:Name="Snake4"
+                 Width="15"
+                 Height="15"
+                 Fill="#617E50"
+                 IsVisible="False" />
+
 
     </Canvas>
 
@@ -52,3 +80,4 @@
   </Design.DataContext> -->
 
 </Window>
+```

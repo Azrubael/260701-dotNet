@@ -1,7 +1,9 @@
+```csharp
 using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -13,41 +15,40 @@ namespace _260901_ava2d.Views;
 public partial class MainWindow : Window
 {
   private readonly DispatcherTimer _timer;
+  private readonly Rectangle[] _segments;
   private readonly List<Point> _history = [];
 
   private Vector _direction = new(1, 0);
   private Point _headPosition;
 
   private const double SegmentSize = 15;
-  private const double SnakeSpeed = 30;
+  private const double SnakeSpeed = 12; // pixels per second
 
   public MainWindow()
   {
     InitializeComponent();
+
+    _segments = [Snake0, Snake1, Snake2, Snake3, Snake4];
+
     _timer = new DispatcherTimer
     {
       Interval = TimeSpan.FromMilliseconds(16)
     };
+
     _timer.Tick += OnTimerTick;
   }
+
 
   private void OnNewGameClick(object? sender, RoutedEventArgs e)
   {
     _headPosition = new Point(75, GameCanvas.Height / 2);
     _direction = new Vector(1, 0);
+
     _history.Clear();
     _history.Add(_headPosition);
 
-    // Pre-populate history with initial snake body segments
-    // This creates a snake trail going backwards from the head
-    double segmentSpacing = SegmentSize * 0.9; // Space between segments
-    for (int i = 1; i < 6; i++) // 5 body segments
-    {
-      Point prevSegment = new(
-        _headPosition.X - (i * segmentSpacing),
-        _headPosition.Y);
-      _history.Add(prevSegment);
-    }
+    foreach (Rectangle segment in _segments)
+      segment.IsVisible = true;
 
     SnakePath.IsVisible = true;
     UpdateSnake();
@@ -56,8 +57,10 @@ public partial class MainWindow : Window
     _timer.Start();
   }
 
+
   private void OnWindowKeyDown(object? sender, KeyEventArgs e)
   {
+
     if (e.Key == Key.Q)
     {
       OnExitClick(sender, e);
@@ -69,23 +72,28 @@ public partial class MainWindow : Window
     }
 
     if (_history.Count < 100)
-      return;
+      return; // Ignore input until snake is long enough
 
     if (e.Key == Key.Left)
     {
+      // Relative left turn: (x, y) -> (y, -x)
       _direction = new Vector(_direction.Y, -_direction.X);
       e.Handled = true;
     }
     else if (e.Key == Key.Right)
     {
+      // Relative right turn: (x, y) -> (-y, x)
       _direction = new Vector(-_direction.Y, _direction.X);
       e.Handled = true;
     }
+
   }
+
 
   private void OnTimerTick(object? sender, EventArgs e)
   {
     double step = SnakeSpeed * 0.016;
+
     _headPosition += _direction * step;
 
     double maxX = GameCanvas.Width - SegmentSize;
@@ -100,6 +108,7 @@ public partial class MainWindow : Window
     if (_history.Count > 2000)
       _history.RemoveAt(_history.Count - 1);
 
+    // NEW: Check for self-collision
     if (CheckSelfCollision())
     {
       GameOver();
@@ -109,9 +118,11 @@ public partial class MainWindow : Window
     UpdateSnake();
   }
 
+
   private bool CheckSelfCollision()
   {
-    double bodyLength = 5 * SegmentSize * 0.9;
+    // Ignore the trail currently occupied by the snake's own segments.
+    double bodyLength = _segments.Length * SegmentSize *0.9;
     double travelled = 0;
     double collisionDistance = SegmentSize * 1.5;
 
@@ -140,10 +151,12 @@ public partial class MainWindow : Window
     return false;
   }
 
+
   private void GameOver()
   {
     _timer.Stop();
 
+    // Show game over message (you can use a dialog or status text)
     var dialog = new Window
     {
       Title = "Game Over!",
@@ -165,21 +178,38 @@ public partial class MainWindow : Window
     dialog.ShowDialog(this);
   }
 
+
+  // private void UpdateSnake()
+  // {
+  //   for (int segmentIndex = 0; segmentIndex < _segments.Length; segmentIndex++)
+  //   {
+  //     Point position = GetHistoryPoint(segmentIndex * SegmentSize);
+
+  //     Canvas.SetLeft(_segments[segmentIndex], position.X);
+  //     Canvas.SetTop(_segments[segmentIndex], position.Y);
+  //   }
+  // }
+
+
   private void UpdateSnake()
   {
-    var points = new Points();
+    SnakePath.Points.Clear();
 
-    // Add all snake segment positions to the polyline
-    for (int segmentIndex = 0; segmentIndex < 5; segmentIndex++)
+    for (int segmentIndex = 0; segmentIndex < _segments.Length; segmentIndex++)
     {
       Point position = GetHistoryPoint(segmentIndex * SegmentSize);
 
-      points.Add(new Point(
+      Canvas.SetLeft(_segments[segmentIndex], position.X);
+      Canvas.SetTop(_segments[segmentIndex], position.Y);
+
+      // Exclude Snake0; draw through Snake1–Snake4.
+      if (segmentIndex > 0)
+      {
+        SnakePath.Points.Add(new Point(
           position.X + SegmentSize / 2,
           position.Y + SegmentSize / 2));
+      }
     }
-
-    SnakePath.Points = points;
   }
 
   private Point GetHistoryPoint(double distance)
@@ -218,3 +248,4 @@ public partial class MainWindow : Window
     Close();
   }
 }
+```
