@@ -40,11 +40,10 @@ public partial class MainWindow : Window
 
     // Pre-populate history with initial snake body segments
     // This creates a snake trail going backwards from the head
-    double segmentSpacing = SegmentSize * 0.9; // Space between segments
     for (int i = 1; i < 6; i++) // 5 body segments
     {
       Point prevSegment = new(
-        _headPosition.X - (i * segmentSpacing),
+        _headPosition.X - (i * SegmentSize),
         _headPosition.Y);
       _history.Add(prevSegment);
     }
@@ -97,7 +96,7 @@ public partial class MainWindow : Window
 
     _history.Insert(0, _headPosition);
 
-    if (_history.Count > 2000)
+    if (_history.Count > 200)
       _history.RemoveAt(_history.Count - 1);
 
     if (CheckSelfCollision())
@@ -111,9 +110,9 @@ public partial class MainWindow : Window
 
   private bool CheckSelfCollision()
   {
-    double bodyLength = 5 * SegmentSize * 0.9;
+    double bodyLength = 5 * SegmentSize *0.9;
     double travelled = 0;
-    double collisionDistance = SegmentSize * 1.5;
+    double collisionDistance = SegmentSize;
 
     for (int i = 1; i < _history.Count; i++)
     {
