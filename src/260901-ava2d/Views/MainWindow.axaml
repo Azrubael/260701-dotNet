@@ -1,11 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:_260901_ava2d.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        xmlns:vm="using:_260901_ava2d.Views"
         x:Class="_260901_ava2d.Views.MainWindow"
-        x:DataType="vm:MainViewModel"
+        x:DataType="vm:MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="Avalonia Snake!"
         Width="600" Height="550"
@@ -18,10 +15,17 @@
     <Canvas x:Name="GameCanvas"
             Width="600"
             Height="480"
-            Background="lightgray"
+            Background="darkgray"
             IsHitTestVisible="False"
             HorizontalAlignment="Center"
             VerticalAlignment="Center">
+
+      <TextBlock x:Name="StartMessage"
+                 Canvas.Left="120"
+                 Canvas.Top="220"
+                 Text="Press 'N' to play, press 'Q' to close the application."
+                 FontSize="16"
+                 Foreground="Black" />
 
       <Polyline x:Name="SnakePath"
                 Stroke="#617E50"
@@ -29,6 +33,13 @@
                 StrokeLineCap="Round"
                 StrokeJoin="Round"
                 IsVisible="False" />
+
+      <Image
+        x:Name="IconImage"
+        Width="30"
+        Height="30"
+        Stretch="Uniform"
+        IsVisible="False" />
 
     </Canvas>
 
@@ -44,11 +55,5 @@
       </MenuItem>
     </Menu>
   </Grid>
-
-  <!-- <Design.DataContext> -->
-  <!-- This only sets the DataContext for the previewer in an IDE,
-  to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-  <!-- <vm:MainViewModel />
-  </Design.DataContext> -->
 
 </Window>
