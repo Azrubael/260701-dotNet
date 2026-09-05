@@ -5,7 +5,7 @@
         x:DataType="vm:MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="Avalonia Snake!"
-        Width="600" Height="550"
+        Width="600" Height="507"
         CanResize="False"
         Focusable="True"
         KeyDown="OnWindowKeyDown"
@@ -18,7 +18,7 @@
             Background="darkgray"
             IsHitTestVisible="False"
             HorizontalAlignment="Center"
-            VerticalAlignment="Center">
+            VerticalAlignment="Bottom">
 
       <TextBlock x:Name="StartMessage"
                  Canvas.Left="120"
@@ -29,7 +29,7 @@
 
       <Polyline x:Name="SnakePath"
                 Stroke="#617E50"
-                StrokeThickness="15"
+                StrokeThickness="12"
                 StrokeLineCap="Round"
                 StrokeJoin="Round"
                 IsVisible="False" />

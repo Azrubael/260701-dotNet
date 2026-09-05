@@ -15,13 +15,10 @@ namespace _260901_ava2d.Views;
 
 public partial class MainWindow : Window
 {
-  private readonly DispatcherTimer _timer;
-  private readonly List<Point> _history = [];
-  private readonly DispatcherTimer _iconTimer;
-  private readonly Random _random = new();
-  private readonly List<Polyline> _snakePaths = [];
+  private const double SegmentSize = 15;
+  private const double SnakeSpeed = 90;
 
-  private readonly string[] _iconUris =
+  private static readonly string[] _iconUris =
   [
     "avares://_260901_ava2d/Assets/food_icon_01.png",
     "avares://_260901_ava2d/Assets/food_icon_02.png",
@@ -40,35 +37,42 @@ public partial class MainWindow : Window
     "avares://_260901_ava2d/Assets/food_icon_16.png"
   ];
 
+  private readonly DispatcherTimer _timer;
+  private readonly DispatcherTimer _iconTimer;
+  private readonly Random _random = new();
+  private readonly List<Point> _history = [];
+  private readonly List<Polyline> _snakePaths = [];
 
   private Vector _direction = new(1, 0);
   private Point _headPosition;
-
-  private const double SegmentSize = 15;
-  private const double SnakeSpeed = 90;
+  private bool _isPaused;
 
   private Window? _gameOverDialog;
+
 
   public MainWindow()
   {
     InitializeComponent();
+    _snakePaths.Add(SnakePath);
 
-      _snakePaths.Add(SnakePath);
-
-  for (int i = 0; i < 8; i++)
-  {
-    Polyline path = new()
+    for (int i = 0; i < 8; i++)
     {
-      Stroke = SnakePath.Stroke,
-      StrokeThickness = SnakePath.StrokeThickness,
-      StrokeLineCap = SnakePath.StrokeLineCap,
-      StrokeJoin = SnakePath.StrokeJoin,
-      IsVisible = false
-    };
+      Polyline path = new()
+      {
+        Stroke = SnakePath.Stroke,
+        StrokeThickness = SnakePath.StrokeThickness,
+        StrokeLineCap = SnakePath.StrokeLineCap,
+        StrokeJoin = SnakePath.StrokeJoin,
+        IsVisible = false
+      };
 
-    GameCanvas.Children.Add(path);
-    _snakePaths.Add(path);
-  }
+      GameCanvas.Children.Add(path);
+      _snakePaths.Add(path);
+    }
+
+    GameCanvas.Children.Remove(IconImage);
+    GameCanvas.Children.Add(IconImage);
+    GameCanvas.ClipToBounds = true;
 
     _timer = new DispatcherTimer
     {
@@ -88,6 +92,7 @@ public partial class MainWindow : Window
 
   private void OnNewGameClick(object? sender, RoutedEventArgs e)
   {
+    _isPaused = false;
     StartMessage.IsVisible = false;
     _timer.Stop();
     _iconTimer.Stop();
@@ -125,7 +130,7 @@ public partial class MainWindow : Window
     UpdateSnake();
 
     // Temporarily comment this out while testing.
-    // ShowRandomIcon();
+    ShowRandomIcon();
 
     _iconTimer.Start();
     _timer.Start();
@@ -134,11 +139,10 @@ public partial class MainWindow : Window
   }
 
 
-
   private void OnIconTimerTick(object? sender, EventArgs e)
   {
     IconImage.IsVisible = false;
-    // ShowRandomIcon();
+    ShowRandomIcon();
   }
 
 
@@ -203,57 +207,78 @@ public partial class MainWindow : Window
   }
 
 
-
   private void OnWindowKeyDown(object? sender, KeyEventArgs e)
   {
-    if (e.Key == Key.Q)
+    switch (e.Key)
     {
-      OnExitClick(sender, e);
-    }
-    else if (e.Key == Key.N)
-    {
-      OnNewGameClick(sender, e);
-      e.Handled = true;
-      return;
+      case Key.Q:
+        OnExitClick(sender, e);
+        return;
+
+      case Key.N:
+        OnNewGameClick(sender, e);
+        e.Handled = true;
+        return;
+
+      case Key.P:
+        TogglePause();
+        e.Handled = true;
+        return;
     }
 
     if (_history.Count < 100)
       return;
 
-    if (e.Key == Key.Left)
+    switch (e.Key)
     {
-      _direction = new Vector(_direction.Y, -_direction.X);
-      e.Handled = true;
-      return;
-    }
-    else if (e.Key == Key.Right)
-    {
-      _direction = new Vector(-_direction.Y, _direction.X);
-      e.Handled = true;
-      return;
+      case Key.Left:
+        RotateLeft();
+        e.Handled = true;
+        break;
+
+      case Key.Right:
+        RotateRight();
+        e.Handled = true;
+        break;
     }
   }
 
+
+  private void TogglePause()
+  {
+    _isPaused = !_isPaused;
+
+    if (_isPaused)
+    {
+      _timer.Stop();
+      _iconTimer.Stop();
+    }
+    else
+    {
+      _timer.Start();
+      _iconTimer.Start();
+    }
+  }
+
+
+  private void RotateLeft()
+  {
+    _direction = new Vector(_direction.Y, -_direction.X);
+  }
+
+
+  private void RotateRight()
+  {
+    _direction = new Vector(-_direction.Y, _direction.X);
+  }
+
+
   private void OnTimerTick(object? sender, EventArgs e)
   {
-    double step = SnakeSpeed * 0.01;
+    double step = SnakeSpeed * 0.015;
 
-    Point nextPosition = _headPosition + _direction * step;
-
-    double canvasWidth = GameCanvas.Bounds.Width;
-    double canvasHeight = GameCanvas.Bounds.Height;
-
-    if (double.IsNaN(canvasWidth)) canvasWidth = 0;
-    if (double.IsNaN(canvasHeight)) canvasHeight = 0;
-
-    double maxX = Math.Max(0, canvasWidth - SegmentSize);
-    double maxY = Math.Max(0, canvasHeight - SegmentSize);
-
-    nextPosition = new Point(
-        Math.Clamp(nextPosition.X, 0, maxX),
-        Math.Clamp(nextPosition.Y, 0, maxY));
-
-    _headPosition = nextPosition;
+    // Do not clamp or reset this position.
+    _headPosition += _direction * step;
 
     _history.Insert(0, _headPosition);
 
@@ -318,7 +343,7 @@ public partial class MainWindow : Window
       WindowStartupLocation = WindowStartupLocation.CenterOwner,
       Content = new TextBlock
       {
-        Text = "You bit yourself!",
+        Text = "Game over:\nthe Snake bit itself!",
         TextAlignment = TextAlignment.Center,
         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
         Foreground = new SolidColorBrush(Colors.Red),
@@ -350,12 +375,55 @@ public partial class MainWindow : Window
   }
 
 
+  private Point GetHistoryPoint(double distance)
+  {
+    if (_history.Count == 0)
+      return _headPosition;
+
+    if (distance <= 0)
+      return _history[0];
+
+    double travelled = 0;
+
+    for (int i = 1; i < _history.Count; i++)
+    {
+      Point newer = _history[i - 1];
+      Point older = _history[i];
+
+      double dx = older.X - newer.X;
+      double dy = older.Y - newer.Y;
+      double segmentLength = Math.Sqrt(dx * dx + dy * dy);
+
+      if (travelled + segmentLength >= distance)
+      {
+        double remaining = distance - travelled;
+        double ratio = segmentLength == 0
+            ? 0
+            : remaining / segmentLength;
+
+        return new Point(
+            newer.X + dx * ratio,
+            newer.Y + dy * ratio);
+      }
+
+      travelled += segmentLength;
+    }
+
+    return _history[^1];
+  }
+
+
 
   private void UpdateSnake()
   {
+    double canvasWidth = GameCanvas.Bounds.Width;
+    double canvasHeight = GameCanvas.Bounds.Height;
+
+    if (canvasWidth <= 0 || canvasHeight <= 0)
+      return;
+
     var points = new Points();
 
-    // Add all snake segment positions to the polyline
     for (int segmentIndex = 0; segmentIndex < 5; segmentIndex++)
     {
       Point position = GetHistoryPoint(segmentIndex * SegmentSize);
@@ -365,37 +433,33 @@ public partial class MainWindow : Window
           position.Y + SegmentSize / 2));
     }
 
-    SnakePath.Points = points;
-  }
+    // Move the main copy back into the visible canvas.
+    double baseOffsetX =
+        -Math.Floor(points[0].X / canvasWidth) * canvasWidth;
 
-  private Point GetHistoryPoint(double distance)
-  {
-    double travelled = 0;
+    double baseOffsetY =
+        -Math.Floor(points[0].Y / canvasHeight) * canvasHeight;
 
-    for (int i = 1; i < _history.Count; i++)
+    int pathIndex = 0;
+
+    for (int y = -1; y <= 1; y++)
     {
-      Point newer = _history[i - 1];
-      Point older = _history[i];
-
-      double segmentDistance = Math.Sqrt(
-          Math.Pow(newer.X - older.X, 2) +
-          Math.Pow(newer.Y - older.Y, 2));
-
-      if (travelled + segmentDistance >= distance)
+      for (int x = -1; x <= 1; x++)
       {
-        double ratio = segmentDistance == 0
-            ? 0
-            : (distance - travelled) / segmentDistance;
+        Points translatedPoints = [];
 
-        return new Point(
-            newer.X + (older.X - newer.X) * ratio,
-            newer.Y + (older.Y - newer.Y) * ratio);
+        foreach (Point point in points)
+        {
+          translatedPoints.Add(new Point(
+              point.X + baseOffsetX + x * canvasWidth,
+              point.Y + baseOffsetY + y * canvasHeight));
+        }
+
+        Polyline path = _snakePaths[pathIndex++];
+        path.Points = translatedPoints;
+        path.IsVisible = true;
       }
-
-      travelled += segmentDistance;
     }
-
-    return _history[^1];
   }
 
   private void OnExitClick(object? sender, RoutedEventArgs e)
