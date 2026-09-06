@@ -17,6 +17,7 @@ public partial class MainWindow : Window
 {
   public ModelOfCanvas ThisCanvas { get; } = new(640, 480);
   public double WindowHeight => ThisCanvas.Height + 30;
+  readonly ModelOfSnake thisSnake = new();
 
   private static readonly string[] _iconUris =
   [
@@ -42,7 +43,8 @@ public partial class MainWindow : Window
   private readonly Random _random = new();
   private bool _isPaused;
   private Window? _gameOverDialog;
-  readonly ModelOfSnake thisSnake = new();
+
+  private int _score;
 
 
   public MainWindow()
@@ -90,23 +92,20 @@ public partial class MainWindow : Window
   {
     _isPaused = false;
     StartMessage.IsVisible = false;
+    _score = 0;
+    ScoreText.Text = $"Score: {_score,-5}";
     _timer.Stop();
     _iconTimer.Stop();
 
-    Console.WriteLine(
-        $"Canvas: {GameCanvas.Bounds.Width} x {GameCanvas.Bounds.Height}");
-    double canvasWidth = GameCanvas.Bounds.Width;
-    double canvasHeight = GameCanvas.Bounds.Height;
-
-    if (canvasWidth <= 0 || canvasHeight <= 0 ||
-        double.IsNaN(canvasWidth) || double.IsNaN(canvasHeight))
+    if (ThisCanvas.Width <= 0 || ThisCanvas.Width <= 0 ||
+        double.IsNaN(ThisCanvas.Width) || double.IsNaN(ThisCanvas.Width))
     {
       return;
     }
 
     thisSnake.HeadPosition = new Point(
-        canvasWidth / 2 - ModelOfSnake.SegmentSize / 2,
-        canvasHeight / 2 - ModelOfSnake.SegmentSize / 2);
+        ThisCanvas.Width / 2 - ModelOfSnake.SegmentSize / 2,
+        ThisCanvas.Width / 2 - ModelOfSnake.SegmentSize / 2);
 
     thisSnake.Direction = new Vector(1, 0);
 
@@ -166,13 +165,10 @@ public partial class MainWindow : Window
       return;
     }
 
-    double canvasWidth = GameCanvas.Bounds.Width;
-    double canvasHeight = GameCanvas.Bounds.Height;
-
-    if (!double.IsFinite(canvasWidth) ||
-        !double.IsFinite(canvasHeight) ||
-        canvasWidth <= 0 ||
-        canvasHeight <= 0)
+    if (!double.IsFinite(ThisCanvas.Width) ||
+        !double.IsFinite(ThisCanvas.Height) ||
+        ThisCanvas.Width <= 0 ||
+        ThisCanvas.Height <= 0)
     {
       IconImage.IsVisible = false;
       return;
@@ -187,8 +183,8 @@ public partial class MainWindow : Window
     if (!double.IsFinite(iconHeight) || iconHeight <= 0)
       iconHeight = 30;
 
-    double availableWidth = canvasWidth - iconWidth;
-    double availableHeight = canvasHeight - iconHeight;
+    double availableWidth = ThisCanvas.Width - iconWidth;
+    double availableHeight = ThisCanvas.Height - iconHeight;
 
     if (availableWidth <= 0 || availableHeight <= 0)
     {
@@ -261,17 +257,59 @@ public partial class MainWindow : Window
     }
   }
 
+
+  private bool CheckIconCollision()
+  {
+    if (!IconImage.IsVisible)
+      return false;
+
+    double iconWidth = IconImage.Bounds.Width;
+    double iconHeight = IconImage.Bounds.Height;
+
+    if (!double.IsFinite(iconWidth) || iconWidth <= 0)
+      iconWidth = 30;
+
+    if (!double.IsFinite(iconHeight) || iconHeight <= 0)
+      iconHeight = 30;
+
+    var iconRect = new Rect(
+        Canvas.GetLeft(IconImage),
+        Canvas.GetTop(IconImage),
+        iconWidth,
+        iconHeight);
+
+    var snakeHeadRect = new Rect(
+        thisSnake.HeadPosition.X,
+        thisSnake.HeadPosition.Y,
+        ModelOfSnake.SegmentSize,
+        ModelOfSnake.SegmentSize);
+
+    if (!iconRect.Intersects(snakeHeadRect))
+      return false;
+
+    _score++;
+    ScoreText.Text = $"Score: {_score}";
+
+    // Prevent counting the same icon repeatedly.
+    IconImage.IsVisible = false;
+
+
+    return true;
+  }
+
+
   private void OnTimerTick(object? sender, EventArgs e)
   {
-    double step = ModelOfSnake.SnakeSpeed * 0.015;
+    double step = ModelOfSnake.SnakeSpeed * 0.01;
 
     // Do not clamp or reset this position.
     thisSnake.HeadPosition += thisSnake.Direction * step;
-
     thisSnake.History.Insert(0, thisSnake.HeadPosition);
 
-    if (thisSnake.History.Count > 200)
+    if (thisSnake.History.Count > 100)
       thisSnake.History.RemoveAt(thisSnake.History.Count - 1);
+
+    CheckIconCollision();
 
     if (thisSnake.IsSelfCollision(ThisCanvas))
     {
