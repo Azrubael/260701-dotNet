@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:_260907_ava2d.Views"
+        x:Class="_260907_ava2d.Views.MainWindow"
+        x:DataType="vm:MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Avalonia Snake!"
+        Width="{Binding CanvasModel.Width}"
+        Height="{Binding WindowHeight}"
+        CanResize="False"
+        Focusable="True"
+        KeyDown="OnWindowKeyDown"
+        WindowStartupLocation="CenterScreen">
+
+  <Grid Background="lightgray">
+    <Canvas x:Name="GameCanvas"
+        Width="{Binding CanvasModel.Width}"
+        Height="{Binding CanvasModel.Height}"
+        Background="{Binding CanvasModel.Background}"
+        IsHitTestVisible="False"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Bottom">
+
+      <TextBlock x:Name="StartMessage"
+        Canvas.Left="120"
+        Canvas.Top="220"
+        Text="Press 'N' to play, press 'Q' to close the application."
+        FontSize="16"
+        Foreground="Black" />
+
+      <Polyline x:Name="SnakePath"
+        Stroke="#617E50"
+        StrokeThickness="12"
+        StrokeLineCap="Round"
+        StrokeJoin="Round"
+        IsVisible="False" />
+
+      <Image
+        x:Name="IconImage"
+        Width="30"
+        Height="30"
+        Stretch="Uniform"
+        IsVisible="False" />
+
+    </Canvas>
+
+    <Menu HorizontalAlignment="Left" VerticalAlignment="Top">
+      <MenuItem Header="_Game">
+        <MenuItem Header="_New" Click="OnNewGameClick" />
+        <MenuItem Header="_Pause" Click="OnPauseClick" />
+        <MenuItem Header="_Quit" Click="OnExitClick" />
+      </MenuItem>
+
+      <MenuItem Header="_Help">
+        <MenuItem Header="FAQ" />
+        <MenuItem Header="About" />
+      </MenuItem>
+    </Menu>
+  </Grid>
+
+</Window>
