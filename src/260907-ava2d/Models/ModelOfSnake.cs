@@ -1,4 +1,3 @@
-```csharp
 using Avalonia;
 using Avalonia.Controls.Shapes;
 using System;
@@ -9,24 +8,30 @@ namespace _260907_ava2d.Models;
 
 public class ModelOfSnake
 {
+  public const int BodySegments = 5;
   public const double SegmentSize = 15;
   public const double SnakeSpeed = 90;
-  public readonly List<Polyline> _snakePaths = [];
+  public readonly List<Point> History = [];
+  public readonly List<Polyline> SnakePaths = [];
+  public Point HeadPosition;
+  public Vector Direction = new(1, 0);
 
-  private Point GetHistoryPoint(double distance)
+
+  public Point GetHistoryPoint(
+      double distance)
   {
-    if (_history.Count == 0)
-      return _headPosition;
+    if (History.Count == 0)
+      return HeadPosition;
 
     if (distance <= 0)
-      return _history[0];
+      return History[0];
 
     double travelled = 0;
 
-    for (int i = 1; i < _history.Count; i++)
+    for (int i = 1; i < History.Count; i++)
     {
-      Point newer = _history[i - 1];
-      Point older = _history[i];
+      Point newer = History[i - 1];
+      Point older = History[i];
 
       double dx = older.X - newer.X;
       double dy = older.Y - newer.Y;
@@ -47,14 +52,14 @@ public class ModelOfSnake
       travelled += segmentLength;
     }
 
-    return _history[^1];
+    return History[^1];
   }
 
 
-  private void UpdateSnake()
+  public void UpdateSnake(ModelOfCanvas thisCanvas)
   {
-    double canvasWidth = ModelOfCanvas.Width;
-    double canvasHeight = ModelOfCanvas.Height;
+    double canvasWidth = thisCanvas.Width;
+    double canvasHeight = thisCanvas.Height;
 
     if (canvasWidth <= 0 || canvasHeight <= 0)
       return;
@@ -92,40 +97,34 @@ public class ModelOfSnake
               point.Y + baseOffsetY + y * canvasHeight));
         }
 
-        Polyline path = _snakePaths[pathIndex++];
+        Polyline path = SnakePaths[pathIndex++];
         path.Points = translatedPoints;
         path.IsVisible = true;
       }
     }
   }
 
-  public static bool IsSelfCollision(
-    IReadOnlyList<Point> history,
-    Point headPosition,
-    double segmentSize,
-    int bodySegments)
+  public bool IsSelfCollision(ModelOfCanvas thisCanvas)
   {
     // Segment 1 is the neck and is connected to the head.
     for (int segmentIndex = 2;
-         segmentIndex < bodySegments;
+         segmentIndex < BodySegments;
          segmentIndex++)
     {
-      Point bodyPoint = GetPointAtDistance(
-          history,
-          segmentIndex * segmentSize);
+      Point bodyPoint = GetPointAtDistance(segmentIndex * SegmentSize);
 
       double dx = WrappedDifference(
-          headPosition.X,
+          HeadPosition.X,
           bodyPoint.X,
-          ModelOfCanvas.Width);
+          thisCanvas.Width);
 
       double dy = WrappedDifference(
-          headPosition.Y,
+          HeadPosition.Y,
           bodyPoint.Y,
-          ModelOfCanvas.Height);
+          thisCanvas.Height);
 
       // The head touches a body element.
-      if (dx * dx + dy * dy <= segmentSize * segmentSize)
+      if (dx * dx + dy * dy <= SegmentSize * SegmentSize)
         return true;
     }
 
@@ -133,19 +132,17 @@ public class ModelOfSnake
   }
 
 
-  private static Point GetPointAtDistance(
-      IReadOnlyList<Point> history,
-      double distance)
+  private Point GetPointAtDistance(double distance)
   {
-    if (history.Count == 0 || distance <= 0)
-      return history.Count == 0 ? new Point() : history[0];
+    if (History.Count == 0 || distance <= 0)
+      return History.Count == 0 ? new Point() : History[0];
 
     double travelled = 0;
 
-    for (int i = 1; i < history.Count; i++)
+    for (int i = 1; i < History.Count; i++)
     {
-      Point newer = history[i - 1];
-      Point older = history[i];
+      Point newer = History[i - 1];
+      Point older = History[i];
 
       double dx = older.X - newer.X;
       double dy = older.Y - newer.Y;
@@ -165,7 +162,7 @@ public class ModelOfSnake
       travelled += length;
     }
 
-    return history[^1];
+    return History[^1];
   }
 
 
@@ -183,6 +180,18 @@ public class ModelOfSnake
 
     return difference;
   }
-}
 
-```
+
+
+  public void RotateLeft()
+  {
+    Direction = new Vector(Direction.Y, -Direction.X);
+  }
+
+
+  public void RotateRight()
+  {
+    Direction = new Vector(-Direction.Y, Direction.X);
+  }
+
+}

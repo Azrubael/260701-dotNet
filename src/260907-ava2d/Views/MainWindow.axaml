@@ -5,7 +5,7 @@
         x:DataType="vm:MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="Avalonia Snake!"
-        Width="{Binding CanvasModel.Width}"
+        Width="{Binding ThisCanvas.Width}"
         Height="{Binding WindowHeight}"
         CanResize="False"
         Focusable="True"
@@ -14,9 +14,9 @@
 
   <Grid Background="lightgray">
     <Canvas x:Name="GameCanvas"
-        Width="{Binding CanvasModel.Width}"
-        Height="{Binding CanvasModel.Height}"
-        Background="{Binding CanvasModel.Background}"
+        Width="{Binding ThisCanvas.Width}"
+        Height="{Binding ThisCanvas.Height}"
+        Background="{Binding ThisCanvas.Background}"
         IsHitTestVisible="False"
         HorizontalAlignment="Center"
         VerticalAlignment="Bottom">
