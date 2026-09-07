@@ -30,7 +30,7 @@
 
       <Polyline x:Name="SnakePath"
             Stroke="#617E50"
-            StrokeThickness="12"
+            StrokeThickness="{Binding Snake.BodyWidth}"
             StrokeLineCap="Round"
             StrokeJoin="Round"
             IsVisible="False" />
@@ -41,6 +41,13 @@
             Height="30"
             Stretch="Uniform"
             IsVisible="False" />
+
+      <Ellipse
+            Width="{Binding Snake.HeadLength}"
+            Height="{Binding Snake.HeadWidth}"
+            Fill="#617E50"
+            Stroke="Indigo"
+            StrokeThickness="2" />
 
     </Canvas>
 

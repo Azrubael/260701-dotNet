@@ -17,7 +17,7 @@ public partial class MainWindow : Window
 {
   public ModelOfCanvas ThisCanvas { get; } = new(640, 480);
   public double WindowHeight => ThisCanvas.Height + 30;
-  readonly ModelOfSnake snake = new();
+  public ModelOfSnake Snake { get; } = new();
 
   private static readonly string[] _iconUris =
   [
@@ -51,7 +51,7 @@ public partial class MainWindow : Window
   {
     InitializeComponent();
     DataContext = this;
-    snake.SnakePaths.Add(SnakePath);
+    Snake.SnakePaths.Add(SnakePath);
 
     for (int i = 0; i < 8; i++)
     {
@@ -65,7 +65,7 @@ public partial class MainWindow : Window
       };
 
       GameCanvas.Children.Add(path);
-      snake.SnakePaths.Add(path);
+      Snake.SnakePaths.Add(path);
     }
 
     GameCanvas.Children.Remove(IconImage);
@@ -94,9 +94,9 @@ public partial class MainWindow : Window
     StartMessage.IsVisible = false;
     _score = 0;
     ScoreText.Text = $"Score: {_score,-5}";
-    snake.History.Clear();
-    snake.SetSpeed();
-    snake.SetLength();
+    Snake.History.Clear();
+    Snake.SetSpeed();
+    Snake.SetLength();
     _timer.Stop();
     _iconTimer.Stop();
 
@@ -106,12 +106,12 @@ public partial class MainWindow : Window
       return;
     }
 
-    snake.CreateSnake(ThisCanvas);
+    Snake.CreateSnake(ThisCanvas);
 
     SnakePath.IsVisible = true;
     IconImage.IsVisible = false;
 
-    snake.UpdateSnake(ThisCanvas);
+    Snake.UpdateSnake(ThisCanvas);
 
     // Temporarily comment this out while testing.
     ShowRandomIcon();
@@ -212,12 +212,12 @@ public partial class MainWindow : Window
         return;
 
       case Key.Left:
-        snake.RotateLeft();
+        Snake.RotateLeft();
         e.Handled = true;
         break;
 
       case Key.Right:
-        snake.RotateRight();
+        Snake.RotateRight();
         e.Handled = true;
         break;
     }
@@ -272,11 +272,11 @@ public partial class MainWindow : Window
     const double padding = 3;
 
     double headX = Wrap(
-        snake.HeadPosition.X,
+        Snake.HeadPosition.X,
         ThisCanvas.Width);
 
     double headY = Wrap(
-        snake.HeadPosition.Y,
+        Snake.HeadPosition.Y,
         ThisCanvas.Height);
 
     var iconRect = new Rect(
@@ -310,10 +310,10 @@ public partial class MainWindow : Window
 
   private void OnTimerTick(object? sender, EventArgs e)
   {
-    snake.Move();
-    snake.UpdateSnake(ThisCanvas);
+    Snake.Move();
+    Snake.UpdateSnake(ThisCanvas);
 
-    if (snake.IsSelfCollision(ThisCanvas))
+    if (Snake.IsSelfCollision(ThisCanvas))
     {
       GameOver();
       return;
@@ -324,8 +324,8 @@ public partial class MainWindow : Window
       _score++;
       ScoreText.Text = $"Score: {_score}";
 
-      snake.AddLength();
-      snake.AddSpeed(_score);
+      Snake.AddLength();
+      Snake.AddSpeed(_score);
       ShowRandomIcon();
     }
     ;

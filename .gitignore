@@ -4,6 +4,9 @@ logs
 az_output.log
 **/bin/
 **/obj/
+**/Publish/
+**/publish/
+
 **/workflow/
 __pycache__
 .DS_Store

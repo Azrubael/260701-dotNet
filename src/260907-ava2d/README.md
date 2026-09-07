@@ -9,7 +9,7 @@ dotnet publish .\260907-ava2d.csproj `
   --self-contained true `
   -p:PublishSingleFile=true `
   -p:IncludeNativeLibrariesForSelfExtract=true `
-  -p:IncludeAllContentForSelfExtract=true `
+  -p:EnableCompressionInSingleFile=true `
   -p:PublishTrimmed=false `
   -p:DebugType=None `
   -p:DebugSymbols=false `
@@ -79,7 +79,7 @@ dotnet publish .\SnakeGame.csproj -c Release -o .\publish\win-x64
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>_260907_ava2d</RootNamespace>
-    <AssemblyName>snake</AssemblyName>
+    <AssemblyName>_260907_ava2d</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
@@ -102,7 +102,6 @@ dotnet publish .\SnakeGame.csproj -c Release -o .\publish\win-x64
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
 </Project>
-
 ```
 
 ### Reserve AI

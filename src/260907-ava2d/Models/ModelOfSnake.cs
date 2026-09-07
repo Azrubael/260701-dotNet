@@ -9,6 +9,9 @@ namespace _260907_ava2d.Models;
 public class ModelOfSnake
 {
   public const double SegmentSize = 16;
+  public int BodyWidth { get; private set; }    //
+  public int HeadWidth { get; private set; }    //
+  public int HeadLength { get; private set; }   //
   public double SnakeSpeed { get; private set; }
   public int BodySegments { get; private set; }
   public readonly List<Point> History = [];
@@ -22,6 +25,9 @@ public class ModelOfSnake
   public void CreateSnake(ModelOfCanvas canvas)
   {
     History.Clear();
+
+    SetBodyWidth();
+    SetHeadSizes();
 
     HeadPosition = new Point(
         canvas.Width / 2 - SegmentSize / 2,
@@ -82,6 +88,7 @@ public class ModelOfSnake
       return;
     }
 
+    AddBodyWidth();
     var points = new Points();
 
     for (int bs = 0; bs < BodySegments; bs++)
@@ -248,22 +255,32 @@ public class ModelOfSnake
     return Math.Sqrt(dx * dx + dy * dy);
   }
 
+
   public void RotateLeft() =>
       Direction = new Vector(Direction.Y, -Direction.X);
-
 
   public void RotateRight() =>
       Direction = new Vector(-Direction.Y, Direction.X);
 
+  public void SetBodyWidth() => BodyWidth = 30;
+
+  public void AddBodyWidth()
+  {
+    BodyWidth += (BodySegments - 5) * 2;
+    SetHeadSizes();
+  }
+
+  public void SetHeadSizes()
+  {
+    HeadWidth = BodyWidth * 4/3;
+    HeadLength = BodyWidth * 2;
+  }
 
   public void SetLength() => BodySegments = 4;
 
-
   public void AddLength() => BodySegments++;
 
-
   public void SetSpeed() => SnakeSpeed = 1;
-
 
   public void AddSpeed(int s) => SnakeSpeed += s * 0.02;
 
