@@ -5,11 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "C#: utility_free",
+      "name": "C#: 260907-ava2d",
       "type": "dotnet",
       "request": "launch",
-      "projectPath": "${workspaceFolder}\\src\\utility_free\\utility_free.csproj",
-      "launchConfigurationId": "TargetFramework=;utility_free"
+      "projectPath": "${workspaceFolder}\\src\\260907-ava2d\\260907-ava2d.csproj",
+      "launchConfigurationId": "TargetFramework=;260907-ava2d"
     }
   ]
 }

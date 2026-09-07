@@ -8,13 +8,119 @@ namespace _260907_ava2d.Models;
 
 public class ModelOfSnake
 {
-  public const int BodySegments = 5;
-  public const double SegmentSize = 15;
-  public const double SnakeSpeed = 90;
+  public const double SegmentSize = 16;
+  public double SnakeSpeed { get; private set; }
+  public int BodySegments { get; private set; }
   public readonly List<Point> History = [];
   public readonly List<Polyline> SnakePaths = [];
-  public Point HeadPosition;
-  public Vector Direction = new(1, 0);
+  public Point HeadPosition { get; private set; }
+  public Vector Direction { get; private set; } = new(1, 0);
+
+  public int RequiedHistory { get; private set; }
+
+
+  public void CreateSnake(ModelOfCanvas canvas)
+  {
+    History.Clear();
+
+    HeadPosition = new Point(
+        canvas.Width / 2 - SegmentSize / 2,
+        canvas.Height / 2 - SegmentSize / 2);
+    Direction = new Vector(1, 0);
+    History.Add(HeadPosition);
+
+    for (int bs = 1; bs < BodySegments; bs++)
+    {
+      History.Add(new Point(
+          HeadPosition.X - bs * SegmentSize,
+          HeadPosition.Y));
+    }
+  }
+
+
+  public void Move()
+  {
+    if (History.Count == 0)
+      History.Add(HeadPosition);
+
+    // Direction is a unit vector, so this moves by SnakeSpeed pixels.
+    HeadPosition += Direction * SnakeSpeed;
+    History.Insert(0, HeadPosition);
+
+    double requiredDistance =
+        Math.Max(0, BodySegments - 1) * SegmentSize;
+
+    double totalDistance = 0;
+
+    for (int i = 1; i < History.Count; i++)
+      totalDistance += Distance(History[i - 1], History[i]);
+
+    // Keep the oldest point needed for interpolation.
+    while (History.Count > 2)
+    {
+      double lastSegmentDistance =
+          Distance(History[^2], History[^1]);
+
+      if (totalDistance - lastSegmentDistance < requiredDistance)
+        break;
+
+      totalDistance -= lastSegmentDistance;
+      History.RemoveAt(History.Count - 1);
+    }
+
+  }
+
+
+  public void UpdateSnake(ModelOfCanvas canvas)
+  {
+    if (canvas.Width <= 30 ||
+        canvas.Height <= 30 ||
+        BodySegments <= 0 ||
+        History.Count == 0 ||
+        SnakePaths.Count < 9)
+    {
+      return;
+    }
+
+    var points = new Points();
+
+    for (int bs = 0; bs < BodySegments; bs++)
+    {
+      Point position = GetHistoryPoint(bs * SegmentSize);
+
+      points.Add(new Point(
+          position.X + SegmentSize / 2,
+          position.Y + SegmentSize / 2));
+    }
+
+    // Move the main copy back into the visible canvas.
+    double baseOffsetX =
+        -Math.Floor(points[0].X / canvas.Width) * canvas.Width;
+
+    double baseOffsetY =
+        -Math.Floor(points[0].Y / canvas.Height) * canvas.Height;
+
+    int pathIndex = 0;
+
+    for (int y = -1; y <= 1; y++)
+    {
+      for (int x = -1; x <= 1; x++)
+      {
+        Points translatedPoints = [];
+
+        foreach (Point point in points)
+        {
+          translatedPoints.Add(new Point(
+              point.X + baseOffsetX + x * canvas.Width,
+              point.Y + baseOffsetY + y * canvas.Height));
+        }
+
+        Polyline path = SnakePaths[pathIndex++];
+        path.Points = translatedPoints;
+        path.IsVisible = true;
+      }
+    }
+  }
 
 
   public Point GetHistoryPoint(
@@ -56,55 +162,7 @@ public class ModelOfSnake
   }
 
 
-  public void UpdateSnake(ModelOfCanvas thisCanvas)
-  {
-    double canvasWidth = thisCanvas.Width;
-    double canvasHeight = thisCanvas.Height;
-
-    if (canvasWidth <= 0 || canvasHeight <= 0)
-      return;
-
-    var points = new Points();
-
-    for (int segmentIndex = 0; segmentIndex < 5; segmentIndex++)
-    {
-      Point position = GetHistoryPoint(segmentIndex * SegmentSize);
-
-      points.Add(new Point(
-          position.X + SegmentSize / 2,
-          position.Y + SegmentSize / 2));
-    }
-
-    // Move the main copy back into the visible canvas.
-    double baseOffsetX =
-        -Math.Floor(points[0].X / canvasWidth) * canvasWidth;
-
-    double baseOffsetY =
-        -Math.Floor(points[0].Y / canvasHeight) * canvasHeight;
-
-    int pathIndex = 0;
-
-    for (int y = -1; y <= 1; y++)
-    {
-      for (int x = -1; x <= 1; x++)
-      {
-        Points translatedPoints = [];
-
-        foreach (Point point in points)
-        {
-          translatedPoints.Add(new Point(
-              point.X + baseOffsetX + x * canvasWidth,
-              point.Y + baseOffsetY + y * canvasHeight));
-        }
-
-        Polyline path = SnakePaths[pathIndex++];
-        path.Points = translatedPoints;
-        path.IsVisible = true;
-      }
-    }
-  }
-
-  public bool IsSelfCollision(ModelOfCanvas thisCanvas)
+  public bool IsSelfCollision(ModelOfCanvas canvas)
   {
     // Segment 1 is the neck and is connected to the head.
     for (int segmentIndex = 2;
@@ -116,12 +174,12 @@ public class ModelOfSnake
       double dx = WrappedDifference(
           HeadPosition.X,
           bodyPoint.X,
-          thisCanvas.Width);
+          canvas.Width);
 
       double dy = WrappedDifference(
           HeadPosition.Y,
           bodyPoint.Y,
-          thisCanvas.Height);
+          canvas.Height);
 
       // The head touches a body element.
       if (dx * dx + dy * dy <= SegmentSize * SegmentSize)
@@ -182,16 +240,31 @@ public class ModelOfSnake
   }
 
 
-
-  public void RotateLeft()
+  private static double Distance(Point first, Point second)
   {
-    Direction = new Vector(Direction.Y, -Direction.X);
+    double dx = first.X - second.X;
+    double dy = first.Y - second.Y;
+
+    return Math.Sqrt(dx * dx + dy * dy);
   }
 
+  public void RotateLeft() =>
+      Direction = new Vector(Direction.Y, -Direction.X);
 
-  public void RotateRight()
-  {
-    Direction = new Vector(-Direction.Y, Direction.X);
-  }
+
+  public void RotateRight() =>
+      Direction = new Vector(-Direction.Y, Direction.X);
+
+
+  public void SetLength() => BodySegments = 4;
+
+
+  public void AddLength() => BodySegments++;
+
+
+  public void SetSpeed() => SnakeSpeed = 1;
+
+
+  public void AddSpeed(int s) => SnakeSpeed += s * 0.02;
 
 }

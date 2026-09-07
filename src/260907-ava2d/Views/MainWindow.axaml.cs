@@ -17,7 +17,7 @@ public partial class MainWindow : Window
 {
   public ModelOfCanvas ThisCanvas { get; } = new(640, 480);
   public double WindowHeight => ThisCanvas.Height + 30;
-  readonly ModelOfSnake thisSnake = new();
+  readonly ModelOfSnake snake = new();
 
   private static readonly string[] _iconUris =
   [
@@ -51,7 +51,7 @@ public partial class MainWindow : Window
   {
     InitializeComponent();
     DataContext = this;
-    thisSnake.SnakePaths.Add(SnakePath);
+    snake.SnakePaths.Add(SnakePath);
 
     for (int i = 0; i < 8; i++)
     {
@@ -65,7 +65,7 @@ public partial class MainWindow : Window
       };
 
       GameCanvas.Children.Add(path);
-      thisSnake.SnakePaths.Add(path);
+      snake.SnakePaths.Add(path);
     }
 
     GameCanvas.Children.Remove(IconImage);
@@ -94,6 +94,9 @@ public partial class MainWindow : Window
     StartMessage.IsVisible = false;
     _score = 0;
     ScoreText.Text = $"Score: {_score,-5}";
+    snake.History.Clear();
+    snake.SetSpeed();
+    snake.SetLength();
     _timer.Stop();
     _iconTimer.Stop();
 
@@ -103,26 +106,12 @@ public partial class MainWindow : Window
       return;
     }
 
-    thisSnake.HeadPosition = new Point(
-        ThisCanvas.Width / 2 - ModelOfSnake.SegmentSize / 2,
-        ThisCanvas.Width / 2 - ModelOfSnake.SegmentSize / 2);
-
-    thisSnake.Direction = new Vector(1, 0);
-
-    thisSnake.History.Clear();
-    thisSnake.History.Add(thisSnake.HeadPosition);
-
-    for (int i = 1; i < 6; i++)
-    {
-      thisSnake.History.Add(new Point(
-          thisSnake.HeadPosition.X - i * ModelOfSnake.SegmentSize,
-          thisSnake.HeadPosition.Y));
-    }
+    snake.CreateSnake(ThisCanvas);
 
     SnakePath.IsVisible = true;
     IconImage.IsVisible = false;
 
-    thisSnake.UpdateSnake(ThisCanvas);
+    snake.UpdateSnake(ThisCanvas);
 
     // Temporarily comment this out while testing.
     ShowRandomIcon();
@@ -221,20 +210,14 @@ public partial class MainWindow : Window
         TogglePause();
         e.Handled = true;
         return;
-    }
 
-    if (thisSnake.History.Count < 50)
-      return;
-
-    switch (e.Key)
-    {
       case Key.Left:
-        thisSnake.RotateLeft();
+        snake.RotateLeft();
         e.Handled = true;
         break;
 
       case Key.Right:
-        thisSnake.RotateRight();
+        snake.RotateRight();
         e.Handled = true;
         break;
     }
@@ -260,39 +243,66 @@ public partial class MainWindow : Window
 
   private bool CheckIconCollision()
   {
+    // HeadPosition uses continuous coordinates. So after crossing an edge, it may
+    // be outside 0..canvas.Width, while the icon remains inside the visible canvas
+    static double Wrap(double value, double size)
+    {
+      double result = value % size;
+      return result < 0 ? result + size : result;
+    }
+
     if (!IconImage.IsVisible)
       return false;
 
+    double iconLeft = Canvas.GetLeft(IconImage);
+    double iconTop = Canvas.GetTop(IconImage);
     double iconWidth = IconImage.Bounds.Width;
     double iconHeight = IconImage.Bounds.Height;
 
-    if (!double.IsFinite(iconWidth) || iconWidth <= 0)
-      iconWidth = 30;
+    if (!double.IsFinite(iconLeft) ||
+        !double.IsFinite(iconTop) ||
+        !double.IsFinite(iconWidth) ||
+        !double.IsFinite(iconHeight) ||
+        iconWidth <= 0 ||
+        iconHeight <= 0)
+    {
+      return false;
+    }
 
-    if (!double.IsFinite(iconHeight) || iconHeight <= 0)
-      iconHeight = 30;
+    const double padding = 3;
+
+    double headX = Wrap(
+        snake.HeadPosition.X,
+        ThisCanvas.Width);
+
+    double headY = Wrap(
+        snake.HeadPosition.Y,
+        ThisCanvas.Height);
 
     var iconRect = new Rect(
-        Canvas.GetLeft(IconImage),
-        Canvas.GetTop(IconImage),
-        iconWidth,
-        iconHeight);
+        iconLeft + padding,
+        iconTop + padding,
+        Math.Max(0, iconWidth - padding * 2),
+        Math.Max(0, iconHeight - padding * 2));
 
-    var snakeHeadRect = new Rect(
-        thisSnake.HeadPosition.X,
-        thisSnake.HeadPosition.Y,
-        ModelOfSnake.SegmentSize,
-        ModelOfSnake.SegmentSize);
+    var headRect = new Rect(
+        headX + padding,
+        headY + padding,
+        ModelOfSnake.SegmentSize - padding * 2,
+        ModelOfSnake.SegmentSize - padding * 2);
 
-    if (!iconRect.Intersects(snakeHeadRect))
+    bool overlaps =
+        headRect.Left < iconRect.Right &&
+        headRect.Right > iconRect.Left &&
+        headRect.Top < iconRect.Bottom &&
+        headRect.Bottom > iconRect.Top;
+
+    if (!overlaps)
       return false;
 
-    _score++;
-    ScoreText.Text = $"Score: {_score}";
-
-    // Prevent counting the same icon repeatedly.
     IconImage.IsVisible = false;
-
+    _iconTimer.Stop();
+    _iconTimer.Start();
 
     return true;
   }
@@ -300,24 +310,25 @@ public partial class MainWindow : Window
 
   private void OnTimerTick(object? sender, EventArgs e)
   {
-    double step = ModelOfSnake.SnakeSpeed * 0.01;
+    snake.Move();
+    snake.UpdateSnake(ThisCanvas);
 
-    // Do not clamp or reset this position.
-    thisSnake.HeadPosition += thisSnake.Direction * step;
-    thisSnake.History.Insert(0, thisSnake.HeadPosition);
-
-    if (thisSnake.History.Count > 100)
-      thisSnake.History.RemoveAt(thisSnake.History.Count - 1);
-
-    CheckIconCollision();
-
-    if (thisSnake.IsSelfCollision(ThisCanvas))
+    if (snake.IsSelfCollision(ThisCanvas))
     {
       GameOver();
       return;
     }
 
-    thisSnake.UpdateSnake(ThisCanvas);
+    if (CheckIconCollision())
+    {
+      _score++;
+      ScoreText.Text = $"Score: {_score}";
+
+      snake.AddLength();
+      snake.AddSpeed(_score);
+      ShowRandomIcon();
+    }
+    ;
   }
 
 
@@ -359,6 +370,7 @@ public partial class MainWindow : Window
         _gameOverDialog = null;
     }
   }
+
 
   private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
   {
