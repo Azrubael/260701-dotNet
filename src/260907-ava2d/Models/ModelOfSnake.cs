@@ -9,6 +9,7 @@ namespace _260907_ava2d.Models;
 public class ModelOfSnake
 {
   public const double SegmentSize = 16;
+  public const int StartSegmentWidth = 10;
   public int BodyWidth { get; private set; }    //
   public int HeadWidth { get; private set; }    //
   public int HeadLength { get; private set; }   //
@@ -17,6 +18,8 @@ public class ModelOfSnake
   public readonly List<Point> History = [];
   public readonly List<Polyline> SnakePaths = [];
   public Point HeadPosition { get; private set; }
+  public Point HeadRenderPosition { get; private set; }
+  public double HeadRotation { get; private set; }
   public Vector Direction { get; private set; } = new(1, 0);
 
   public int RequiedHistory { get; private set; }
@@ -89,6 +92,12 @@ public class ModelOfSnake
     }
 
     AddBodyWidth();
+    foreach (Polyline path in SnakePaths)
+    {
+      path.StrokeThickness = BodyWidth;
+      path.IsVisible = true;
+    }
+  
     var points = new Points();
 
     for (int bs = 0; bs < BodySegments; bs++)
@@ -127,6 +136,35 @@ public class ModelOfSnake
         path.IsVisible = true;
       }
     }
+    
+    UpdateSnakeHead(canvas);
+  }
+
+
+  public void UpdateSnakeHead(ModelOfCanvas canvas)
+  {
+    static double Wrap(double value, double size)
+    {
+      double result = value % size;
+      return result < 0 ? result + size : result;
+    }
+
+  // Use the same point used by the first body segment.
+  Point firstSegment = GetHistoryPoint(0);
+
+  Point bodyCenter = new(
+      Wrap(firstSegment.X, canvas.Width) + SegmentSize / 2,
+      Wrap(firstSegment.Y, canvas.Height) + SegmentSize / 2);
+
+  // Move the rear of the head slightly into the body.
+  Point headCenter = bodyCenter +
+                     Direction * (HeadLength / 2);
+
+    HeadRenderPosition = new Point(
+        headCenter.X - HeadLength / 2,
+        headCenter.Y - HeadWidth / 2);
+
+    HeadRotation = Math.Atan2(Direction.Y, Direction.X) * 180 / Math.PI;
   }
 
 
@@ -262,26 +300,27 @@ public class ModelOfSnake
   public void RotateRight() =>
       Direction = new Vector(-Direction.Y, Direction.X);
 
-  public void SetBodyWidth() => BodyWidth = 30;
+  public void SetLength() => BodySegments = 4;
+
+  public void AddLength() => BodySegments++;
+
+  public void SetBodyWidth() => BodyWidth = StartSegmentWidth;
 
   public void AddBodyWidth()
   {
-    BodyWidth += (BodySegments - 5) * 2;
+    BodyWidth = StartSegmentWidth + (int)(Math.Max(0, BodySegments - 12) * 0.5);
     SetHeadSizes();
   }
 
   public void SetHeadSizes()
   {
-    HeadWidth = BodyWidth * 4/3;
+    HeadWidth = BodyWidth * 4 / 3;
     HeadLength = BodyWidth * 2;
   }
 
-  public void SetLength() => BodySegments = 4;
-
-  public void AddLength() => BodySegments++;
 
   public void SetSpeed() => SnakeSpeed = 1;
 
-  public void AddSpeed(int s) => SnakeSpeed += s * 0.02;
+  public void AddSpeed(int s) => SnakeSpeed += s * 0.01;
 
 }

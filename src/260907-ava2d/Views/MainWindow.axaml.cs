@@ -109,9 +109,11 @@ public partial class MainWindow : Window
     Snake.CreateSnake(ThisCanvas);
 
     SnakePath.IsVisible = true;
+    SnakeHead.IsVisible = true;
     IconImage.IsVisible = false;
 
     Snake.UpdateSnake(ThisCanvas);
+    UpdateSnakeHeadVisual();
 
     // Temporarily comment this out while testing.
     ShowRandomIcon();
@@ -312,6 +314,7 @@ public partial class MainWindow : Window
   {
     Snake.Move();
     Snake.UpdateSnake(ThisCanvas);
+    UpdateSnakeHeadVisual();
 
     if (Snake.IsSelfCollision(ThisCanvas))
     {
@@ -329,6 +332,21 @@ public partial class MainWindow : Window
       ShowRandomIcon();
     }
     ;
+  }
+
+
+  private void UpdateSnakeHeadVisual()
+  {
+    SnakeHead.Width = Snake.HeadLength;
+    SnakeHead.Height = Snake.HeadWidth;
+
+    Canvas.SetLeft(SnakeHead, Snake.HeadRenderPosition.X);
+    Canvas.SetTop(SnakeHead, Snake.HeadRenderPosition.Y);
+
+    SnakeHead.RenderTransformOrigin =
+        new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
+
+    SnakeHead.RenderTransform = new RotateTransform(Snake.HeadRotation);
   }
 
 

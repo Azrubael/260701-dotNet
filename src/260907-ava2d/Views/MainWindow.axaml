@@ -29,7 +29,7 @@
             Foreground="Black" />
 
       <Polyline x:Name="SnakePath"
-            Stroke="#617E50"
+            Stroke="#1D3012"
             StrokeThickness="{Binding Snake.BodyWidth}"
             StrokeLineCap="Round"
             StrokeJoin="Round"
@@ -43,11 +43,14 @@
             IsVisible="False" />
 
       <Ellipse
+            x:Name="SnakeHead"
             Width="{Binding Snake.HeadLength}"
             Height="{Binding Snake.HeadWidth}"
-            Fill="#617E50"
-            Stroke="Indigo"
-            StrokeThickness="2" />
+            Fill="#1D3012"
+            Stroke="Black"
+            StrokeThickness="1"
+            IsVisible="False"
+            RenderTransformOrigin="0.5,0.5" />
 
     </Canvas>
 
