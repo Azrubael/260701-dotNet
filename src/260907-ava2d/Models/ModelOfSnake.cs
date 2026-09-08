@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.Shapes;
+using Avalonia.Media;
 using System;
 using System.Collections.Generic;
 
@@ -9,10 +10,12 @@ namespace _260907_ava2d.Models;
 public class ModelOfSnake
 {
   public const double SegmentSize = 16;
-  public const int StartSegmentWidth = 10;
-  public int BodyWidth { get; private set; }    //
-  public int HeadWidth { get; private set; }    //
-  public int HeadLength { get; private set; }   //
+  public const int StartSegmentWidth = 11;
+  public IBrush SkinColor { get; } = Brush.Parse("#590992");
+  public IBrush EyeColor { get; } = Brush.Parse("#fffb00");
+  public int BodyWidth { get; private set; }
+  public int HeadWidth { get; private set; }
+  public int HeadLength { get; private set; }
   public double SnakeSpeed { get; private set; }
   public int BodySegments { get; private set; }
   public readonly List<Point> History = [];
@@ -97,7 +100,7 @@ public class ModelOfSnake
       path.StrokeThickness = BodyWidth;
       path.IsVisible = true;
     }
-  
+
     var points = new Points();
 
     for (int bs = 0; bs < BodySegments; bs++)
@@ -136,7 +139,7 @@ public class ModelOfSnake
         path.IsVisible = true;
       }
     }
-    
+
     UpdateSnakeHead(canvas);
   }
 

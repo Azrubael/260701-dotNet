@@ -343,8 +343,8 @@ public partial class MainWindow : Window
     Canvas.SetLeft(SnakeHead, Snake.HeadRenderPosition.X);
     Canvas.SetTop(SnakeHead, Snake.HeadRenderPosition.Y);
 
-    SnakeHead.RenderTransformOrigin =
-        new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
+    // SnakeHead.RenderTransformOrigin =
+    //     new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
 
     SnakeHead.RenderTransform = new RotateTransform(Snake.HeadRotation);
   }
