@@ -95,8 +95,6 @@ public partial class MainWindow : Window
     _score = 0;
     ScoreText.Text = $"Score: {_score,-5}";
     Snake.History.Clear();
-    Snake.SetSpeed();
-    Snake.SetLength();
     _timer.Stop();
     _iconTimer.Stop();
 
@@ -106,13 +104,15 @@ public partial class MainWindow : Window
       return;
     }
 
-    Snake.CreateSnake(ThisCanvas);
+    Snake.CreateSnake(ThisCanvas, LeftEye, RightEye);
 
     SnakePath.IsVisible = true;
     SnakeHead.IsVisible = true;
+    LeftEye.IsVisible = true;
+    RightEye.IsVisible = true;
     IconImage.IsVisible = false;
 
-    Snake.UpdateSnake(ThisCanvas);
+    Snake.UpdateSnake(ThisCanvas, LeftEye, RightEye);
     UpdateSnakeHeadVisual();
 
     // Temporarily comment this out while testing.
@@ -313,7 +313,7 @@ public partial class MainWindow : Window
   private void OnTimerTick(object? sender, EventArgs e)
   {
     Snake.Move();
-    Snake.UpdateSnake(ThisCanvas);
+    Snake.UpdateSnake(ThisCanvas, LeftEye, RightEye);
     UpdateSnakeHeadVisual();
 
     if (Snake.IsSelfCollision(ThisCanvas))
@@ -342,10 +342,6 @@ public partial class MainWindow : Window
 
     Canvas.SetLeft(SnakeHead, Snake.HeadRenderPosition.X);
     Canvas.SetTop(SnakeHead, Snake.HeadRenderPosition.Y);
-
-    // SnakeHead.RenderTransformOrigin =
-    //     new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
-
     SnakeHead.RenderTransform = new RotateTransform(Snake.HeadRotation);
   }
 

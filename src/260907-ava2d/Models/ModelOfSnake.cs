@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using System;
@@ -10,14 +11,16 @@ namespace _260907_ava2d.Models;
 public class ModelOfSnake
 {
   public const double SegmentSize = 16;
-  public const int StartSegmentWidth = 11;
+  public const int StartSegmentWidth = 10;
   public IBrush SkinColor { get; } = Brush.Parse("#590992");
   public IBrush EyeColor { get; } = Brush.Parse("#fffb00");
-  public int BodyWidth { get; private set; }
+  public int BodyWidth { get; private set; } = StartSegmentWidth;
   public int HeadWidth { get; private set; }
   public int HeadLength { get; private set; }
-  public double SnakeSpeed { get; private set; }
-  public int BodySegments { get; private set; }
+  public int EyeSizeX { get; private set; } = 4;
+  public int EyeSizeY { get; private set; } = 4;
+  public double SnakeSpeed { get; private set; } = 1;
+  public int BodySegments { get; private set; } = 4;
   public readonly List<Point> History = [];
   public readonly List<Polyline> SnakePaths = [];
   public Point HeadPosition { get; private set; }
@@ -28,11 +31,13 @@ public class ModelOfSnake
   public int RequiedHistory { get; private set; }
 
 
-  public void CreateSnake(ModelOfCanvas canvas)
+  public void CreateSnake(
+      ModelOfCanvas canvas,
+      Ellipse LeftEye,
+      Ellipse RightEye)
   {
     History.Clear();
 
-    SetBodyWidth();
     SetHeadSizes();
 
     HeadPosition = new Point(
@@ -47,6 +52,8 @@ public class ModelOfSnake
           HeadPosition.X - bs * SegmentSize,
           HeadPosition.Y));
     }
+
+    UpdateSnakeHead(canvas, LeftEye, RightEye);
   }
 
 
@@ -83,7 +90,10 @@ public class ModelOfSnake
   }
 
 
-  public void UpdateSnake(ModelOfCanvas canvas)
+  public void UpdateSnake(
+      ModelOfCanvas canvas,
+      Ellipse LeftEye,
+      Ellipse RightEye)
   {
     if (canvas.Width <= 30 ||
         canvas.Height <= 30 ||
@@ -140,11 +150,14 @@ public class ModelOfSnake
       }
     }
 
-    UpdateSnakeHead(canvas);
+    UpdateSnakeHead(canvas, LeftEye, RightEye);
   }
 
 
-  public void UpdateSnakeHead(ModelOfCanvas canvas)
+  public void UpdateSnakeHead(
+      ModelOfCanvas canvas,
+      Ellipse LeftEye,
+      Ellipse RightEye)
   {
     static double Wrap(double value, double size)
     {
@@ -152,22 +165,38 @@ public class ModelOfSnake
       return result < 0 ? result + size : result;
     }
 
-  // Use the same point used by the first body segment.
-  Point firstSegment = GetHistoryPoint(0);
+    // Use the same point used by the first body segment.
+    Point firstSegment = GetHistoryPoint(0);
 
-  Point bodyCenter = new(
-      Wrap(firstSegment.X, canvas.Width) + SegmentSize / 2,
-      Wrap(firstSegment.Y, canvas.Height) + SegmentSize / 2);
+    Point bodyCenter = new(
+        Wrap(firstSegment.X, canvas.Width) + SegmentSize / 2,
+        Wrap(firstSegment.Y, canvas.Height) + SegmentSize / 2);
 
-  // Move the rear of the head slightly into the body.
-  Point headCenter = bodyCenter +
-                     Direction * (HeadLength / 2);
+    // Move the rear of the head slightly into the body.
+    Point headCenter = bodyCenter +
+                       Direction * (HeadLength / 2);
 
     HeadRenderPosition = new Point(
         headCenter.X - HeadLength / 2,
         headCenter.Y - HeadWidth / 2);
 
     HeadRotation = Math.Atan2(Direction.Y, Direction.X) * 180 / Math.PI;
+
+    Vector side = new(-Direction.Y, Direction.X);
+    Point eyeBase = headCenter + Direction * (HeadLength * 0.25);
+
+    PositionEye(LeftEye, eyeBase + side * (HeadWidth * 0.25));
+    PositionEye(RightEye, eyeBase - side * (HeadWidth * 0.25));
+  }
+
+
+  private static void PositionEye(Ellipse? eye, Point center)
+  {
+    if (eye is null)
+      return;
+
+    Canvas.SetLeft(eye, center.X - eye.Width / 2);
+    Canvas.SetTop(eye, center.Y - eye.Height / 2);
   }
 
 
@@ -303,11 +332,7 @@ public class ModelOfSnake
   public void RotateRight() =>
       Direction = new Vector(-Direction.Y, Direction.X);
 
-  public void SetLength() => BodySegments = 4;
-
   public void AddLength() => BodySegments++;
-
-  public void SetBodyWidth() => BodyWidth = StartSegmentWidth;
 
   public void AddBodyWidth()
   {
@@ -320,9 +345,6 @@ public class ModelOfSnake
     HeadWidth = BodyWidth * 4 / 3;
     HeadLength = BodyWidth * 2;
   }
-
-
-  public void SetSpeed() => SnakeSpeed = 1;
 
   public void AddSpeed(int s) => SnakeSpeed += s * 0.01;
 

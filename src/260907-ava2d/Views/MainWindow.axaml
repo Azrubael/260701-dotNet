@@ -55,14 +55,20 @@
             </Ellipse.RenderTransform>
       </Ellipse>
 
-      <Ellipse x:Name="LeftEye" Width="4" Height="4" Fill="Black"
+      <Ellipse x:Name="LeftEye"
+            Width="{Binding Snake.EyeSizeX}"
+            Height="{Binding Snake.EyeSizeY}"
+            Fill="{Binding Snake.EyeColor}"
             RenderTransformOrigin="0.5,0.5">
             <Ellipse.RenderTransform>
                   <ScaleTransform />
             </Ellipse.RenderTransform>
       </Ellipse>
 
-      <Ellipse x:Name="RightEye" Width="4" Height="4" Fill="Black"
+      <Ellipse x:Name="RightEye"
+            Width="{Binding Snake.EyeSizeX}"
+            Height="{Binding Snake.EyeSizeY}"
+            Fill="{Binding Snake.EyeColor}"
             RenderTransformOrigin="0.5,0.5">
             <Ellipse.RenderTransform>
                   <ScaleTransform />
