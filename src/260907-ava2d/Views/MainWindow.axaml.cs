@@ -94,7 +94,6 @@ public partial class MainWindow : Window
     StartMessage.IsVisible = false;
     _score = 0;
     ScoreText.Text = $"Score: {_score,-5}";
-    Snake.History.Clear();
     _timer.Stop();
     _iconTimer.Stop();
 
@@ -327,7 +326,7 @@ public partial class MainWindow : Window
       _score++;
       ScoreText.Text = $"Score: {_score}";
 
-      Snake.AddLength();
+      Snake.AddLength(ThisCanvas, LeftEye, RightEye, SnakeHead);
       Snake.AddSpeed(_score);
       ShowRandomIcon();
     }

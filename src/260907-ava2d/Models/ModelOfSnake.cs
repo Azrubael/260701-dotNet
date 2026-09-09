@@ -4,6 +4,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 
 namespace _260907_ava2d.Models;
@@ -12,15 +13,17 @@ public class ModelOfSnake
 {
   public const double SegmentSize = 16;
   public const int StartSegmentWidth = 10;
+  public const int StartEyeSize = 4;
   public IBrush SkinColor { get; } = Brush.Parse("#590992");
   public IBrush EyeColor { get; } = Brush.Parse("#fffb00");
   public int BodyWidth { get; private set; } = StartSegmentWidth;
   public int HeadWidth { get; private set; }
   public int HeadLength { get; private set; }
-  public int EyeSizeX { get; private set; } = 4;
-  public int EyeSizeY { get; private set; } = 4;
-  public double SnakeSpeed { get; private set; } = 1;
-  public int BodySegments { get; private set; } = 4;
+  public int EyeSizeX { get; private set; } = StartEyeSize;
+  public int EyeSizeY { get; private set; } = StartEyeSize;
+  private bool _isBlinking;
+  public double SnakeSpeed { get; private set; }
+  public int BodySegments { get; private set; }
   public readonly List<Point> History = [];
   public readonly List<Polyline> SnakePaths = [];
   public Point HeadPosition { get; private set; }
@@ -33,12 +36,10 @@ public class ModelOfSnake
 
   public void CreateSnake(
       ModelOfCanvas canvas,
-      Ellipse LeftEye,
-      Ellipse RightEye)
+      Ellipse leftEye,
+      Ellipse rightEye)
   {
-    History.Clear();
-
-    SetHeadSizes();
+    ResetSnake();
 
     HeadPosition = new Point(
         canvas.Width / 2 - SegmentSize / 2,
@@ -53,7 +54,7 @@ public class ModelOfSnake
           HeadPosition.Y));
     }
 
-    UpdateSnakeHead(canvas, LeftEye, RightEye);
+    UpdateSnakeHead(canvas, leftEye, rightEye);
   }
 
 
@@ -92,8 +93,8 @@ public class ModelOfSnake
 
   public void UpdateSnake(
       ModelOfCanvas canvas,
-      Ellipse LeftEye,
-      Ellipse RightEye)
+      Ellipse leftEye,
+      Ellipse rightEye)
   {
     if (canvas.Width <= 30 ||
         canvas.Height <= 30 ||
@@ -150,14 +151,14 @@ public class ModelOfSnake
       }
     }
 
-    UpdateSnakeHead(canvas, LeftEye, RightEye);
+    UpdateSnakeHead(canvas, leftEye, rightEye);
   }
 
 
   public void UpdateSnakeHead(
       ModelOfCanvas canvas,
-      Ellipse LeftEye,
-      Ellipse RightEye)
+      Ellipse leftEye,
+      Ellipse rightEye)
   {
     static double Wrap(double value, double size)
     {
@@ -185,8 +186,8 @@ public class ModelOfSnake
     Vector side = new(-Direction.Y, Direction.X);
     Point eyeBase = headCenter + Direction * (HeadLength * 0.25);
 
-    PositionEye(LeftEye, eyeBase + side * (HeadWidth * 0.25));
-    PositionEye(RightEye, eyeBase - side * (HeadWidth * 0.25));
+    PositionEye(leftEye, eyeBase + side * (HeadWidth * 0.25));
+    PositionEye(rightEye, eyeBase - side * (HeadWidth * 0.25));
   }
 
 
@@ -332,7 +333,15 @@ public class ModelOfSnake
   public void RotateRight() =>
       Direction = new Vector(-Direction.Y, Direction.X);
 
-  public void AddLength() => BodySegments++;
+  public void AddLength(
+      ModelOfCanvas canvas,
+      Ellipse leftEye,
+      Ellipse rightEye,
+      Ellipse snakeHead)
+  {
+    BodySegments++;
+    _ = BlinkSnakeEyes(canvas, leftEye, rightEye, snakeHead);
+  }
 
   public void AddBodyWidth()
   {
@@ -347,5 +356,68 @@ public class ModelOfSnake
   }
 
   public void AddSpeed(int s) => SnakeSpeed += s * 0.01;
+
+
+  public void ResetSnake()
+  {
+    History.Clear();
+    _isBlinking = false;
+
+    BodyWidth = StartSegmentWidth;
+    EyeSizeX = StartEyeSize;
+    EyeSizeY = StartEyeSize;
+    BodySegments = 4;
+    SnakeSpeed = 1;
+    SetHeadSizes();
+  }
+
+
+  private async Task BlinkSnakeEyes(
+    ModelOfCanvas canvas,
+    Ellipse leftEye,
+    Ellipse rightEye,
+    Ellipse snakeHead)
+  {
+    if (_isBlinking)
+      return;
+
+    _isBlinking = true;
+
+    try
+    {
+      var origin = new RelativePoint(
+          0.5, 0.5, RelativeUnit.Relative);
+
+      leftEye.RenderTransformOrigin = origin;
+      rightEye.RenderTransformOrigin = origin;
+      snakeHead.RenderTransformOrigin = origin;
+
+      leftEye.RenderTransform = new ScaleTransform(1, 0.05);
+      rightEye.RenderTransform = new ScaleTransform(1, 0.05);
+
+      double[] headScales =
+      [
+        1.05, 1.1, 1.15, 1.25, 1.15, 1.1, 1.05
+      ];
+
+      foreach (double scale in headScales)
+      {
+        snakeHead.RenderTransform =
+            new ScaleTransform(0.9, scale);
+
+        UpdateSnakeHead(canvas, leftEye, rightEye);
+        await Task.Delay((int)(100 * scale));
+      }
+    }
+    finally
+    {
+      leftEye.RenderTransform = new ScaleTransform(1, 1);
+      rightEye.RenderTransform = new ScaleTransform(1, 1);
+      snakeHead.RenderTransform = new ScaleTransform(1, 1);
+
+      UpdateSnakeHead(canvas, leftEye, rightEye);
+      _isBlinking = false;
+    }
+  }
 
 }
