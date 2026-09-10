@@ -4,8 +4,6 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Threading;
 using System;
 using _260907_ava2d.Models;
@@ -15,32 +13,13 @@ namespace _260907_ava2d.Views;
 
 public partial class MainWindow : Window
 {
-  public ModelOfCanvas ThisCanvas { get; } = new(640, 480);
+  public ModelOfCanvas ThisCanvas { get; } = new(640, 480, "#f5f5e0");
   public double WindowHeight => ThisCanvas.Height + 30;
   public ModelOfSnake Snake { get; } = new();
 
-  private static readonly string[] _iconUris =
-  [
-    "avares://_260907_ava2d/Assets/food_icon_01.png",
-    "avares://_260907_ava2d/Assets/food_icon_02.png",
-    "avares://_260907_ava2d/Assets/food_icon_03.png",
-    "avares://_260907_ava2d/Assets/food_icon_05.png",
-    "avares://_260907_ava2d/Assets/food_icon_06.png",
-    "avares://_260907_ava2d/Assets/food_icon_07.png",
-    "avares://_260907_ava2d/Assets/food_icon_08.png",
-    "avares://_260907_ava2d/Assets/food_icon_09.png",
-    "avares://_260907_ava2d/Assets/food_icon_10.png",
-    "avares://_260907_ava2d/Assets/food_icon_11.png",
-    "avares://_260907_ava2d/Assets/food_icon_12.png",
-    "avares://_260907_ava2d/Assets/food_icon_13.png",
-    "avares://_260907_ava2d/Assets/food_icon_14.png",
-    "avares://_260907_ava2d/Assets/food_icon_15.png",
-    "avares://_260907_ava2d/Assets/food_icon_16.png"
-  ];
-
   private readonly DispatcherTimer _timer;
   private readonly DispatcherTimer _iconTimer;
-  private readonly Random _random = new();
+
   private bool _isPaused;
   private Window? _gameOverDialog;
 
@@ -97,8 +76,8 @@ public partial class MainWindow : Window
     _timer.Stop();
     _iconTimer.Stop();
 
-    if (ThisCanvas.Width <= 0 || ThisCanvas.Width <= 0 ||
-        double.IsNaN(ThisCanvas.Width) || double.IsNaN(ThisCanvas.Width))
+    if (ThisCanvas.Width <= 0 || ThisCanvas.Height <= 0 ||
+        double.IsNaN(ThisCanvas.Width) || double.IsNaN(ThisCanvas.Height))
     {
       return;
     }
@@ -115,13 +94,14 @@ public partial class MainWindow : Window
     UpdateSnakeHeadVisual();
 
     // Temporarily comment this out while testing.
-    ShowRandomIcon();
+    ThisCanvas.ShowRandomIcon(IconImage);
 
     _iconTimer.Start();
     _timer.Start();
 
     Focus();
   }
+
 
   private void OnPauseClick(object? sender, RoutedEventArgs e)
   {
@@ -132,65 +112,7 @@ public partial class MainWindow : Window
   private void OnIconTimerTick(object? sender, EventArgs e)
   {
     IconImage.IsVisible = false;
-    ShowRandomIcon();
-  }
-
-
-  private void ShowRandomIcon()
-  {
-    if (_iconUris.Length == 0)
-      return;
-
-    string uri = _iconUris[_random.Next(_iconUris.Length)];
-
-    try
-    {
-      using System.IO.Stream stream = AssetLoader.Open(new Uri(uri));
-      IconImage.Source = new Bitmap(stream);
-    }
-    catch (Exception exception)
-    {
-      Console.WriteLine($"Unable to load icon '{uri}': {exception}");
-      IconImage.IsVisible = false;
-      return;
-    }
-
-    if (!double.IsFinite(ThisCanvas.Width) ||
-        !double.IsFinite(ThisCanvas.Height) ||
-        ThisCanvas.Width <= 0 ||
-        ThisCanvas.Height <= 0)
-    {
-      IconImage.IsVisible = false;
-      return;
-    }
-
-    double iconWidth = IconImage.Bounds.Width;
-    double iconHeight = IconImage.Bounds.Height;
-
-    if (!double.IsFinite(iconWidth) || iconWidth <= 0)
-      iconWidth = 30;
-
-    if (!double.IsFinite(iconHeight) || iconHeight <= 0)
-      iconHeight = 30;
-
-    double availableWidth = ThisCanvas.Width - iconWidth;
-    double availableHeight = ThisCanvas.Height - iconHeight;
-
-    if (availableWidth <= 0 || availableHeight <= 0)
-    {
-      IconImage.IsVisible = false;
-      return;
-    }
-
-    Canvas.SetLeft(
-        IconImage,
-        _random.NextDouble() * availableWidth);
-
-    Canvas.SetTop(
-        IconImage,
-        _random.NextDouble() * availableHeight);
-
-    IconImage.IsVisible = true;
+    ThisCanvas.ShowRandomIcon(IconImage);
   }
 
 
@@ -328,7 +250,7 @@ public partial class MainWindow : Window
 
       Snake.AddLength(ThisCanvas, LeftEye, RightEye, SnakeHead);
       Snake.AddSpeed(_score);
-      ShowRandomIcon();
+      ThisCanvas.ShowRandomIcon(IconImage);
     }
     ;
   }
