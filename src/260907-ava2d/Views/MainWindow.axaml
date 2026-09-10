@@ -47,12 +47,7 @@
             Width="{Binding Snake.HeadLength}"
             Height="{Binding Snake.HeadWidth}"
             Fill="{Binding Snake.SkinColor}"
-            Stroke="Black"
-            StrokeThickness="1"
-            IsVisible="False" >
-            <Ellipse.RenderTransform>
-                  <ScaleTransform />
-            </Ellipse.RenderTransform>
+            StrokeThickness="1" >
       </Ellipse>
 
       <Ellipse x:Name="LeftEye"
@@ -60,9 +55,6 @@
             Height="{Binding Snake.EyeSizeY}"
             Fill="{Binding Snake.EyeColor}"
             RenderTransformOrigin="0.5,0.5">
-            <Ellipse.RenderTransform>
-                  <ScaleTransform />
-            </Ellipse.RenderTransform>
       </Ellipse>
 
       <Ellipse x:Name="RightEye"
@@ -70,9 +62,6 @@
             Height="{Binding Snake.EyeSizeY}"
             Fill="{Binding Snake.EyeColor}"
             RenderTransformOrigin="0.5,0.5">
-            <Ellipse.RenderTransform>
-                  <ScaleTransform />
-            </Ellipse.RenderTransform>
       </Ellipse>
 
     </Canvas>

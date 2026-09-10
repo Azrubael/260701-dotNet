@@ -385,12 +385,6 @@ public class ModelOfSnake
 
     try
     {
-      var origin = new RelativePoint(
-          0.5, 0.5, RelativeUnit.Relative);
-
-      leftEye.RenderTransformOrigin = origin;
-      rightEye.RenderTransformOrigin = origin;
-      snakeHead.RenderTransformOrigin = origin;
 
       leftEye.RenderTransform = new ScaleTransform(1, 0.05);
       rightEye.RenderTransform = new ScaleTransform(1, 0.05);
@@ -403,10 +397,9 @@ public class ModelOfSnake
       foreach (double scale in headScales)
       {
         snakeHead.RenderTransform =
-            new ScaleTransform(0.9, scale);
+            new ScaleTransform(scale, 0.9);
 
-        UpdateSnakeHead(canvas, leftEye, rightEye);
-        await Task.Delay((int)(100 * scale));
+        await Task.Delay((int)(70 * scale));
       }
     }
     finally
