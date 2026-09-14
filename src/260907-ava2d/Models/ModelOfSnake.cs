@@ -100,7 +100,7 @@ public class ModelOfSnake
         canvas.Height <= 30 ||
         BodySegments <= 0 ||
         History.Count == 0 ||
-        SnakePaths.Count < 9)
+        SnakePaths.Count < 8)
     {
       return;
     }
@@ -391,7 +391,7 @@ public class ModelOfSnake
 
       double[] headScales =
       [
-        1.05, 1.1, 1.15, 1.25, 1.15, 1.1, 1.05
+        1.1, 1.15, 1.25, 1.15, 1.1
       ];
 
       foreach (double scale in headScales)
@@ -399,7 +399,7 @@ public class ModelOfSnake
         snakeHead.RenderTransform =
             new ScaleTransform(scale, 0.9);
 
-        await Task.Delay((int)(70 * scale));
+        await Task.Delay((int)(100 * scale));
       }
     }
     finally

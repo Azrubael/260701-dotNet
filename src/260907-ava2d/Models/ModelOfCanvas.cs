@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Threading;
 
 
 namespace _260907_ava2d.Models;
@@ -90,6 +92,75 @@ public sealed class ModelOfCanvas(
     Canvas.SetLeft(iconImage, left);
     Canvas.SetTop(iconImage, top);
     iconImage.IsVisible = true;
+  }
 
+
+  public bool CheckIconCollision(
+    Image iconImage,
+    ModelOfSnake snake,
+    DispatcherTimer iconTimer)
+  {
+    // HeadPosition uses continuous coordinates. So after crossing an edge, it may
+    // be outside 0..canvas.Width, while the icon remains inside the visible canvas
+    static double Wrap(double value, double size)
+    {
+      double result = value % size;
+      return result < 0 ? result + size : result;
+    }
+
+    if (!iconImage.IsVisible)
+      return false;
+
+    double iconLeft = Canvas.GetLeft(iconImage);
+    double iconTop = Canvas.GetTop(iconImage);
+    double iconWidth = iconImage.Bounds.Width;
+    double iconHeight = iconImage.Bounds.Height;
+
+    if (!double.IsFinite(iconLeft) ||
+        !double.IsFinite(iconTop) ||
+        !double.IsFinite(iconWidth) ||
+        !double.IsFinite(iconHeight) ||
+        iconWidth <= 0 ||
+        iconHeight <= 0)
+    {
+      return false;
+    }
+
+    const double padding = 3;
+
+    double headX = Wrap(
+        snake.HeadPosition.X,
+        Width);
+
+    double headY = Wrap(
+        snake.HeadPosition.Y,
+        Height);
+
+    var iconRect = new Rect(
+        iconLeft + padding,
+        iconTop + padding,
+        Math.Max(0, iconWidth - padding * 2),
+        Math.Max(0, iconHeight - padding * 2));
+
+    var headRect = new Rect(
+        headX + padding,
+        headY + padding,
+        ModelOfSnake.SegmentSize - padding * 2,
+        ModelOfSnake.SegmentSize - padding * 2);
+
+    bool overlaps =
+        headRect.Left < iconRect.Right &&
+        headRect.Right > iconRect.Left &&
+        headRect.Top < iconRect.Bottom &&
+        headRect.Bottom > iconRect.Top;
+
+    if (!overlaps)
+      return false;
+
+    iconImage.IsVisible = false;
+    iconTimer.Stop();
+    iconTimer.Start();
+
+    return true;
   }
 }

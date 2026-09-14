@@ -13,12 +13,12 @@ namespace _260907_ava2d.Views;
 
 public partial class MainWindow : Window
 {
-  public ModelOfCanvas ThisCanvas { get; } = new(640, 480, "#f5f5e0");
+  public ModelOfCanvas ThisCanvas { get; } = new(640, 480, "#fffbd4");
   public double WindowHeight => ThisCanvas.Height + 30;
   public ModelOfSnake Snake { get; } = new();
 
   private readonly DispatcherTimer _timer;
-  private readonly DispatcherTimer _iconTimer;
+  public readonly DispatcherTimer IconTimer;
 
   private bool _isPaused;
   private Window? _gameOverDialog;
@@ -57,11 +57,11 @@ public partial class MainWindow : Window
     };
     _timer.Tick += OnTimerTick;
 
-    _iconTimer = new DispatcherTimer
+    IconTimer = new DispatcherTimer
     {
       Interval = TimeSpan.FromSeconds(30)
     };
-    _iconTimer.Tick += OnIconTimerTick;
+    IconTimer.Tick += OnIconTimerTick;
 
     Closing += OnMainWindowClosing;
   }
@@ -74,7 +74,7 @@ public partial class MainWindow : Window
     _score = 0;
     ScoreText.Text = $"Score: {_score,-5}";
     _timer.Stop();
-    _iconTimer.Stop();
+    IconTimer.Stop();
 
     if (ThisCanvas.Width <= 0 || ThisCanvas.Height <= 0 ||
         double.IsNaN(ThisCanvas.Width) || double.IsNaN(ThisCanvas.Height))
@@ -96,7 +96,7 @@ public partial class MainWindow : Window
     // Temporarily comment this out while testing.
     ThisCanvas.ShowRandomIcon(IconImage);
 
-    _iconTimer.Start();
+    IconTimer.Start();
     _timer.Start();
 
     Focus();
@@ -154,84 +154,17 @@ public partial class MainWindow : Window
     if (_isPaused)
     {
       _timer.Stop();
-      _iconTimer.Stop();
+      IconTimer.Stop();
     }
     else
     {
       _timer.Start();
-      _iconTimer.Start();
+      IconTimer.Start();
     }
   }
 
 
-  private bool CheckIconCollision()
-  {
-    // HeadPosition uses continuous coordinates. So after crossing an edge, it may
-    // be outside 0..canvas.Width, while the icon remains inside the visible canvas
-    static double Wrap(double value, double size)
-    {
-      double result = value % size;
-      return result < 0 ? result + size : result;
-    }
-
-    if (!IconImage.IsVisible)
-      return false;
-
-    double iconLeft = Canvas.GetLeft(IconImage);
-    double iconTop = Canvas.GetTop(IconImage);
-    double iconWidth = IconImage.Bounds.Width;
-    double iconHeight = IconImage.Bounds.Height;
-
-    if (!double.IsFinite(iconLeft) ||
-        !double.IsFinite(iconTop) ||
-        !double.IsFinite(iconWidth) ||
-        !double.IsFinite(iconHeight) ||
-        iconWidth <= 0 ||
-        iconHeight <= 0)
-    {
-      return false;
-    }
-
-    const double padding = 3;
-
-    double headX = Wrap(
-        Snake.HeadPosition.X,
-        ThisCanvas.Width);
-
-    double headY = Wrap(
-        Snake.HeadPosition.Y,
-        ThisCanvas.Height);
-
-    var iconRect = new Rect(
-        iconLeft + padding,
-        iconTop + padding,
-        Math.Max(0, iconWidth - padding * 2),
-        Math.Max(0, iconHeight - padding * 2));
-
-    var headRect = new Rect(
-        headX + padding,
-        headY + padding,
-        ModelOfSnake.SegmentSize - padding * 2,
-        ModelOfSnake.SegmentSize - padding * 2);
-
-    bool overlaps =
-        headRect.Left < iconRect.Right &&
-        headRect.Right > iconRect.Left &&
-        headRect.Top < iconRect.Bottom &&
-        headRect.Bottom > iconRect.Top;
-
-    if (!overlaps)
-      return false;
-
-    IconImage.IsVisible = false;
-    _iconTimer.Stop();
-    _iconTimer.Start();
-
-    return true;
-  }
-
-
-  private void OnTimerTick(object? sender, EventArgs e)
+   private void OnTimerTick(object? sender, EventArgs e)
   {
     Snake.Move();
     Snake.UpdateSnake(ThisCanvas, LeftEye, RightEye);
@@ -243,7 +176,7 @@ public partial class MainWindow : Window
       return;
     }
 
-    if (CheckIconCollision())
+    if (ThisCanvas.CheckIconCollision(IconImage, Snake, IconTimer))
     {
       _score++;
       ScoreText.Text = $"Score: {_score}";
@@ -273,7 +206,7 @@ public partial class MainWindow : Window
       return;
 
     _timer.Stop();
-    _iconTimer.Stop();
+    IconTimer.Stop();
 
     _gameOverDialog = new Window
     {
@@ -310,7 +243,7 @@ public partial class MainWindow : Window
   private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
   {
     _timer.Stop();
-    _iconTimer.Stop();
+    IconTimer.Stop();
 
     _gameOverDialog?.Close();
     _gameOverDialog = null;
@@ -320,7 +253,7 @@ public partial class MainWindow : Window
   private void OnExitClick(object? sender, RoutedEventArgs e)
   {
     _timer.Stop();
-    _iconTimer.Stop();
+    IconTimer.Stop();
 
     _gameOverDialog?.Close();
     _gameOverDialog = null;
