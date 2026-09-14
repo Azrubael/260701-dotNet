@@ -74,8 +74,8 @@
       </MenuItem>
 
       <MenuItem Header="_Help">
-        <MenuItem Header="FAQ" />
-        <MenuItem Header="About" />
+        <MenuItem Header="FAQ" Click="OnFAQClick"/>
+        <MenuItem Header="About" Click="OnAboutClick" />
       </MenuItem>
     </Menu>
 

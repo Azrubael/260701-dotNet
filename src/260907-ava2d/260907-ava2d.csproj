@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>_260907_ava2d</RootNamespace>
-    <AssemblyName>_260907_ava2d</AssemblyName>
+    <AssemblyName>snake</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 

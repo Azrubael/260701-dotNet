@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
@@ -6,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using System;
+using System.Threading.Tasks;
 using _260907_ava2d.Models;
 
 namespace _260907_ava2d.Views;
@@ -164,7 +164,7 @@ public partial class MainWindow : Window
   }
 
 
-   private void OnTimerTick(object? sender, EventArgs e)
+  private void OnTimerTick(object? sender, EventArgs e)
   {
     Snake.Move();
     Snake.UpdateSnake(ThisCanvas, LeftEye, RightEye);
@@ -185,7 +185,7 @@ public partial class MainWindow : Window
       Snake.AddSpeed(_score);
       ThisCanvas.ShowRandomIcon(IconImage);
     }
-    ;
+   ;
   }
 
 
@@ -260,4 +260,76 @@ public partial class MainWindow : Window
 
     Close();
   }
+
+  private async void OnFAQClick(object? sender, RoutedEventArgs e)
+  {
+    await ShowInfoDialogAsync(
+      "Frequently Asked Questions",
+      "This game has no defined end.\nPress 'N' to play.\nPress 'P' to pause.\nPress 'Q' to close the application.\nAny other questions are useless.",
+      Colors.Blue,
+      16);
+  }
+
+
+  private async void OnAboutClick(object? sender, RoutedEventArgs e)
+  {
+    await ShowInfoDialogAsync(
+      "About this game",
+      "This application was created\nas a pet project\non 14 September 2026.",
+      Colors.Blue,
+      16);
+  }
+
+
+  private async Task ShowInfoDialogAsync(
+    string title,
+    string message,
+    Color textColor,
+    double fontSize)
+  {
+    bool wasPaused = _isPaused;
+    bool timerWasRunning = _timer.IsEnabled;
+    bool iconTimerWasRunning = IconTimer.IsEnabled;
+
+    _timer.Stop();
+    IconTimer.Stop();
+    _isPaused = true;
+
+    Window dialog = new()
+    {
+      Title = title,
+      Width = 300,
+      Height = 150,
+      CanResize = false,
+      WindowStartupLocation = WindowStartupLocation.CenterOwner,
+      Content = new TextBlock
+      {
+        Text = message,
+        TextAlignment = TextAlignment.Center,
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        Foreground = new SolidColorBrush(textColor),
+        FontSize = fontSize
+      }
+    };
+
+    try
+    {
+      await dialog.ShowDialog(this);
+    }
+    catch (Exception ex)
+    {
+      Console.Error.WriteLine($"{title} dialog error: {ex}");
+    }
+    finally
+    {
+      _isPaused = wasPaused;
+
+      if (timerWasRunning)
+        _timer.Start();
+
+      if (iconTimerWasRunning)
+        IconTimer.Start();
+    }
+  }
+
 }
