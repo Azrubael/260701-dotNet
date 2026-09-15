@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="480"
+        x:Class="_260914_tetris.Views.MainWindow"
+        Focusable="True"
+        Title="Avalonia Tetris!">
+
+  <Grid Background="lightgray">
+    <Menu HorizontalAlignment="Left" VerticalAlignment="Top">
+      <MenuItem Header="_Game">
+        <MenuItem Header="_New" Click="OnNewGameClick" />
+        <MenuItem Header="_Pause" Click="OnPauseClick" />
+        <MenuItem Header="_Quit" Click="OnExitClick" />
+      </MenuItem>
+
+      <MenuItem Header="_Help">
+        <MenuItem Header="OnFAQClick" />
+        <MenuItem Header="OnAboutClick" />
+      </MenuItem>
+    </Menu>
+    <TextBlock x:Name="StartMessage"
+               Canvas.Left="120"
+               Canvas.Top="220"
+               Text="Press 'N' to play, press 'Q' to close the application."
+               FontSize="16"
+               Foreground="Black" />
+  </Grid>
+</Window>
