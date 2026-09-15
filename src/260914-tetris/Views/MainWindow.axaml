@@ -1,30 +1,41 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="480"
+        Width="600" Height="537"
+        CanResize="False"
         x:Class="_260914_tetris.Views.MainWindow"
         Focusable="True"
+        KeyDown="WindowKeyDown"
         Title="Avalonia Tetris!">
 
-  <Grid Background="lightgray">
+  <Grid Background="lightgray" Margin="2,2,2,2">
+
+    <Canvas x:Name="GameCanvas"
+        Width="200"
+        Height="500"
+        Background="Black"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Bottom"
+        Margin="0,0,0,8"
+        IsVisible="False" />
+
+    <TextBlock x:Name="StartMessage"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Text="Press 'N' to play, press 'Q' to close the application."
+              FontSize="16"
+              Foreground="Black" />
+
     <Menu HorizontalAlignment="Left" VerticalAlignment="Top">
       <MenuItem Header="_Game">
         <MenuItem Header="_New" Click="OnNewGameClick" />
         <MenuItem Header="_Pause" Click="OnPauseClick" />
         <MenuItem Header="_Quit" Click="OnExitClick" />
       </MenuItem>
-
       <MenuItem Header="_Help">
-        <MenuItem Header="OnFAQClick" />
-        <MenuItem Header="OnAboutClick" />
+        <MenuItem Header="FAQ" Click="OnFAQClick" />
+        <MenuItem Header="About" Click="OnAboutClick" />
       </MenuItem>
     </Menu>
-    <TextBlock x:Name="StartMessage"
-               Canvas.Left="120"
-               Canvas.Top="220"
-               Text="Press 'N' to play, press 'Q' to close the application."
-               FontSize="16"
-               Foreground="Black" />
+
   </Grid>
 </Window>

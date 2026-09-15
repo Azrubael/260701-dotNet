@@ -8,11 +8,12 @@ public class GameLogicEngine
 {
   private readonly GameBoard gameBoard;
   private readonly CollisionDetector collisionDetector;
-  private readonly Tetromino currentPiece;
+  private Tetromino currentPiece;
   public Tetromino CurrentPiece => currentPiece;
+  public bool IsGameOver { get; private set; }
 
 
-  public GameLogicEngine(int boardWidth = 10, int boardHeight = 20)
+  public GameLogicEngine(int boardWidth, int boardHeight)
   {
     gameBoard = new GameBoard(boardWidth, boardHeight);
     collisionDetector = new CollisionDetector(gameBoard, boardWidth, boardHeight);
@@ -25,7 +26,7 @@ public class GameLogicEngine
   /// <summary>
   /// Spawns a new tetromino at the top center of the board.
   /// </summary>
-  private static Tetromino SpawnNewPiece()
+  public static Tetromino SpawnNewPiece()
   {
     var random = new Random();
     var types = Enum.GetValues<TetrominoType>().Cast<TetrominoType>().ToArray();
@@ -81,22 +82,54 @@ public class GameLogicEngine
   }
 
 
-  public bool IsGameOver(Tetromino newPiece)
+  public bool CheckIsGameOver(Tetromino newPiece)
   {
     // Game over if new piece cannot spawn
     return !collisionDetector.CanPlace(newPiece);
   }
 
 
-  public void LockPiece()
+  public bool LockPiece()
   {
-    var cells = currentPiece.GetCells();
-    var cellColor = Enum.Parse<CellState>(currentPiece.Type.ToString());
-
-    foreach (var (x, y) in cells)
+    if (!Enum.TryParse<CellState>(
+          currentPiece.Type.ToString(),
+          ignoreCase: false,
+          out var cellState))
     {
-      gameBoard.SetCell(x, y, cellColor);
+      return false;
     }
+
+    foreach (var (x, y) in currentPiece.GetCells())
+    {
+      gameBoard.SetCell(x, y, cellState);
+    }
+
+    return true;
+  }
+
+
+  public bool DropPiece()
+  {
+    while (TryMovePiece(0, 1))
+    {
+    }
+    if (!LockPiece())
+    {
+      IsGameOver = true;
+      return false;
+    }
+    ClearCompleteLines();
+
+    var nextPiece = SpawnNewPiece();
+
+    if (CheckIsGameOver(nextPiece))
+    {
+      IsGameOver = true;
+      return false;
+    }
+
+    currentPiece = nextPiece;
+    return true;
   }
 
 

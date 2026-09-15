@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace _260914_tetris.Models;
 
-public class CollisionDetector(GameBoard board, int width = 10, int height = 20)
+public class CollisionDetector(GameBoard board, int width, int height)
 {
     private readonly int boardWidth = width;
     private readonly int boardHeight = height;
