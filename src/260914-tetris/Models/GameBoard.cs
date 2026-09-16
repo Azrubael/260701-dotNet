@@ -10,7 +10,7 @@ public class GameBoard
     private readonly int width;
     private readonly int height;
 
-    public GameBoard(int width = 10, int height = 30)
+    public GameBoard(int width = 10, int height = 25)
     {
         this.width = width;
         this.height = height;
@@ -115,9 +115,3 @@ public class GameBoard
         }
     }
 }
-
-// public enum CellState
-// {
-//     Empty,
-//     I, O, T, S, Z, J, L
-// }

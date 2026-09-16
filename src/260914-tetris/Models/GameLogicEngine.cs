@@ -8,9 +8,11 @@ public class GameLogicEngine
 {
   private readonly GameBoard gameBoard;
   private readonly CollisionDetector collisionDetector;
+  public CellState[,] BoardSnapshot => gameBoard.GetSnapshot();
   private Tetromino currentPiece;
   public Tetromino CurrentPiece => currentPiece;
   public bool IsGameOver { get; private set; }
+  private static readonly Random random = new();
 
 
   public GameLogicEngine(int boardWidth, int boardHeight)
@@ -28,12 +30,11 @@ public class GameLogicEngine
   /// </summary>
   public static Tetromino SpawnNewPiece()
   {
-    var random = new Random();
-    var types = Enum.GetValues<TetrominoType>().Cast<TetrominoType>().ToArray();
+    var types = Enum.GetValues<TetrominoType>();
     var randomType = types[random.Next(types.Length)];
 
-    // Spawn at top center (x = 4, y = 0)
-    return new Tetromino(randomType, 4, 0);
+    // Spawn at top center (x = 5, y = 0)
+    return new Tetromino(randomType, 5, 0);
   }
 
 
@@ -58,10 +59,6 @@ public class GameLogicEngine
 
   public bool TryRotate(bool clockwise)
   {
-    // Save current state
-    // int originalRotation = currentPiece.CurrentRotation;
-
-    // Attempt rotation
     if (clockwise)
       currentPiece.RotateRight();
     else
@@ -89,20 +86,19 @@ public class GameLogicEngine
   }
 
 
+  /// <summary>
+  /// Checks if the tetromino dopped and locked
+  /// </summary>
+  /// <returns></returns>
   public bool LockPiece()
   {
-    if (!Enum.TryParse<CellState>(
-          currentPiece.Type.ToString(),
-          ignoreCase: false,
-          out var cellState))
-    {
+    var cellState = GetCellState(currentPiece.Type);
+
+    if (cellState == CellState.Empty)
       return false;
-    }
 
     foreach (var (x, y) in currentPiece.GetCells())
-    {
       gameBoard.SetCell(x, y, cellState);
-    }
 
     return true;
   }
@@ -142,4 +138,21 @@ public class GameLogicEngine
       gameBoard.ClearLine(row);
     }
   }
+
+
+  public static CellState GetCellState(TetrominoType type)
+  {
+    return type switch
+    {
+      TetrominoType.I => CellState.I,
+      TetrominoType.L => CellState.L,
+      TetrominoType.Г => CellState.Г,
+      TetrominoType.O => CellState.O,
+      TetrominoType.T => CellState.T,
+      TetrominoType.S => CellState.S,
+      TetrominoType.Z => CellState.Z,
+      _ => CellState.Empty
+    };
+  }
+
 }

@@ -13,10 +13,12 @@ namespace _260914_tetris.Views;
 public partial class MainWindow : Window
 {
   private const int CellSize = 20;
-  private bool _isPaused = false;
+  private const int BoardWidth = 10;
+  private const int BoardHeight = 25;
+  private GameLogicEngine Game = new(BoardWidth, BoardHeight);
   private readonly DispatcherTimer _timer;
   private Window? _gameOverDialog;
-  private GameLogicEngine Game = new(10, 25);
+  private bool _isPaused = false;
 
   public MainWindow()
   {
@@ -49,7 +51,6 @@ public partial class MainWindow : Window
     {
       if (!Game.DropPiece())
       {
-        _timer.Stop();
         DrawTetromino();
         GameOver();
         return;
@@ -63,24 +64,39 @@ public partial class MainWindow : Window
   {
     GameCanvas.Children.Clear();
 
-    var color = GetColor(Game.CurrentPiece.Type);
+    var board = Game.BoardSnapshot;
+
+    for (int x = 0; x < BoardWidth; x++)
+    {
+      for (int y = 0; y < BoardHeight; y++)
+      {
+        if (board[x, y] == CellState.Empty)
+          continue;
+
+        AddCell(x, y, Tetromino.GetColor((TetrominoType)board[x, y]));
+      }
+    }
+
+    var color = Tetromino.GetColor(Game.CurrentPiece.Type);
 
     foreach (var (x, y) in Game.CurrentPiece.GetCells())
+      AddCell(x, y, color);
+  }
+
+  private void AddCell(int x, int y, IBrush color)
+  {
+    var cell = new Rectangle
     {
-      var cell = new Rectangle
-      {
-        Width = CellSize - 1,
-        Height = CellSize - 1,
-        Fill = color,
-        Stroke = Brushes.LightGray,
-        StrokeThickness = 1
-      };
+      Width = CellSize - 1,
+      Height = CellSize - 1,
+      Fill = color,
+      Stroke = Brushes.LightGray,
+      StrokeThickness = 1
+    };
 
-      Canvas.SetLeft(cell, x * CellSize);
-      Canvas.SetTop(cell, y * CellSize);
-
-      GameCanvas.Children.Add(cell);
-    }
+    Canvas.SetLeft(cell, x * CellSize);
+    Canvas.SetTop(cell, y * CellSize);
+    GameCanvas.Children.Add(cell);
   }
 
 
@@ -121,8 +137,14 @@ public partial class MainWindow : Window
         break;
 
       case Key.Down:
-        Game.TryMovePiece(0, 1);
-        break;
+        if (!Game.DropPiece())
+        {
+          _timer.Stop();
+          GameOver();
+        }
+        DrawTetromino();
+        e.Handled = true;
+        return;
 
       case Key.Up:
         Game.TryRotate(true);
@@ -132,20 +154,6 @@ public partial class MainWindow : Window
     DrawTetromino();
   }
 
-  private static IBrush GetColor(TetrominoType type)
-  {
-    return type switch
-    {
-      TetrominoType.A => Brushes.Cyan,
-      TetrominoType.B => Brushes.Orange,
-      TetrominoType.C => Brushes.Blue,
-      TetrominoType.D => Brushes.Yellow,
-      TetrominoType.E => Brushes.Purple,
-      TetrominoType.F => Brushes.Green,
-      TetrominoType.G => Brushes.Red,
-      _ => Brushes.White
-    };
-  }
 
   private void OnPauseClick(object? sender, RoutedEventArgs e)
   {

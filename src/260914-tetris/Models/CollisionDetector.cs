@@ -98,5 +98,5 @@ public class CollisionDetector(GameBoard board, int width, int height)
 public enum CellState
 {
     Empty,
-    I, O, T, S, Z, J, L  // Color-coded by piece type
+    I, L, Г, O, T, S, Z  // Color-coded by piece type
 }
