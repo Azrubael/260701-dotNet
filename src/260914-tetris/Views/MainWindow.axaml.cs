@@ -19,14 +19,20 @@ public partial class MainWindow : Window
   private readonly DispatcherTimer _timer;
   private Window? _gameOverDialog;
   private bool _isPaused = false;
+  private const int MaxFallDelay = 1000;
+  private const int MinFallDelay = 90;
+  private int FallDelay {get; set;} = MaxFallDelay;
+
 
   public MainWindow()
   {
 
     InitializeComponent();
+    Game.LineCleared += OnLineCleared;
+
     _timer = new DispatcherTimer
     {
-      Interval = TimeSpan.FromMilliseconds(500)
+      Interval = TimeSpan.FromMilliseconds(FallDelay)
     };
     _timer.Tick += OnTimerTick;
   }
@@ -35,11 +41,11 @@ public partial class MainWindow : Window
   private void OnNewGameClick(object? sender, RoutedEventArgs e)
   {
     Focus();
-
+    FallDelay = MaxFallDelay;
     _isPaused = false;
     StartMessage.IsVisible = false;
     GameCanvas.IsVisible = true;
-    Game = new(10, 25);
+    Game = new(BoardWidth, BoardHeight);
     _timer.Start();
     DrawTetromino();
   }
@@ -58,6 +64,13 @@ public partial class MainWindow : Window
     }
     DrawTetromino();
   }
+
+
+  private void OnLineCleared()
+{
+  FallDelay = Math.Max(MinFallDelay, FallDelay - 5);
+  _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
+}
 
 
   private void DrawTetromino()
@@ -82,6 +95,7 @@ public partial class MainWindow : Window
     foreach (var (x, y) in Game.CurrentPiece.GetCells())
       AddCell(x, y, color);
   }
+
 
   private void AddCell(int x, int y, IBrush color)
   {
@@ -137,14 +151,8 @@ public partial class MainWindow : Window
         break;
 
       case Key.Down:
-        if (!Game.DropPiece())
-        {
-          _timer.Stop();
-          GameOver();
-        }
-        DrawTetromino();
-        e.Handled = true;
-        return;
+        Game.TryMovePiece(0, 2);
+        break;
 
       case Key.Up:
         Game.TryRotate(true);

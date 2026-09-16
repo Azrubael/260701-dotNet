@@ -13,6 +13,7 @@ public class GameLogicEngine
   public Tetromino CurrentPiece => currentPiece;
   public bool IsGameOver { get; private set; }
   private static readonly Random random = new();
+  public event Action? LineCleared;
 
 
   public GameLogicEngine(int boardWidth, int boardHeight)
@@ -22,6 +23,7 @@ public class GameLogicEngine
 
     // Initialize with first piece
     currentPiece = SpawnNewPiece();
+    gameBoard.LineCleared += () => LineCleared?.Invoke();
   }
 
 
