@@ -99,13 +99,29 @@ public class Tetromino(TetrominoType type, int startX = 0, int startY = 0)
   {
     return type switch
     {
-      TetrominoType.I => Brushes.Cyan,
+      TetrominoType.I => Brushes.BlueViolet,
       TetrominoType.L => Brushes.Orange,
       TetrominoType.Г => Brushes.Blue,
       TetrominoType.O => Brushes.Yellow,
-      TetrominoType.T => Brushes.Purple,
+      TetrominoType.T => Brushes.Pink,
       TetrominoType.S => Brushes.Green,
       TetrominoType.Z => Brushes.Red,
+      _ => Brushes.White
+    };
+  }
+
+
+  public static IBrush GetCellColor(CellState state)
+  {
+    return state switch
+    {
+      CellState.I => GetColor(TetrominoType.I),
+      CellState.L => GetColor(TetrominoType.L),
+      CellState.Г => GetColor(TetrominoType.Г),
+      CellState.O => GetColor(TetrominoType.O),
+      CellState.T => GetColor(TetrominoType.T),
+      CellState.S => GetColor(TetrominoType.S),
+      CellState.Z => GetColor(TetrominoType.Z),
       _ => Brushes.White
     };
   }

@@ -21,7 +21,8 @@ public partial class MainWindow : Window
   private bool _isPaused = false;
   private const int MaxFallDelay = 1000;
   private const int MinFallDelay = 90;
-  private int FallDelay {get; set;} = MaxFallDelay;
+  private int FallDelay { get; set; } = MaxFallDelay;
+  private int _score;
 
 
   public MainWindow()
@@ -44,8 +45,13 @@ public partial class MainWindow : Window
     FallDelay = MaxFallDelay;
     _isPaused = false;
     StartMessage.IsVisible = false;
+    _score = 0;
+    ScoreText.Text = $"Score: {_score,-5}";
+    GameCanvasBorder.IsVisible = true;
     GameCanvas.IsVisible = true;
     Game = new(BoardWidth, BoardHeight);
+    Game.LineCleared += OnLineCleared;
+    _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
     _timer.Start();
     DrawTetromino();
   }
@@ -67,10 +73,13 @@ public partial class MainWindow : Window
 
 
   private void OnLineCleared()
-{
-  FallDelay = Math.Max(MinFallDelay, FallDelay - 5);
-  _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
-}
+  {
+    _score++;
+    ScoreText.Text = $"Score: {_score,-5}";
+
+    FallDelay = Math.Max(MinFallDelay, FallDelay - 5);
+    _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
+  }
 
 
   private void DrawTetromino()
@@ -86,7 +95,8 @@ public partial class MainWindow : Window
         if (board[x, y] == CellState.Empty)
           continue;
 
-        AddCell(x, y, Tetromino.GetColor((TetrominoType)board[x, y]));
+        // AddCell(x, y, Tetromino.GetColor((TetrominoType)board[x, y]));
+        AddCell(x, y, Tetromino.GetCellColor(board[x, y]));
       }
     }
 
