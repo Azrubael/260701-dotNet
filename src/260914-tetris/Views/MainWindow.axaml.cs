@@ -95,7 +95,6 @@ public partial class MainWindow : Window
         if (board[x, y] == CellState.Empty)
           continue;
 
-        // AddCell(x, y, Tetromino.GetColor((TetrominoType)board[x, y]));
         AddCell(x, y, Tetromino.GetCellColor(board[x, y]));
       }
     }
