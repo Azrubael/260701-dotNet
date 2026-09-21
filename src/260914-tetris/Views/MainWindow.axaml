@@ -7,7 +7,7 @@
         KeyDown="WindowKeyDown"
         Title="Avalonia Tetris!">
 
-  <Grid Background="Azure" Margin="2,2,2,2">
+  <Grid Background="Silver" Margin="2,2,2,2">
 
     <Border x:Name="GameCanvasBorder"
             Width="208" Height="508"

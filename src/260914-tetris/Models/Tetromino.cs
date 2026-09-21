@@ -104,7 +104,7 @@ public class Tetromino(TetrominoType type, int startX = 0, int startY = 0)
       TetrominoType.Г => Brushes.Blue,
       TetrominoType.O => Brushes.Yellow,
       TetrominoType.T => Brushes.Pink,
-      TetrominoType.S => Brushes.Green,
+      TetrominoType.S => Brushes.Magenta,
       TetrominoType.Z => Brushes.Red,
       _ => Brushes.White
     };

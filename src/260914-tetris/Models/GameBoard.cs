@@ -81,10 +81,10 @@ public class GameBoard
   /// <summary>
   /// Clears multiple rows and shifts accordingly.
   /// </summary>
+/*
   public void ClearLines(IEnumerable<int> rows)
   {
-    // Sort in descending order to clear bottom rows first
-    // (prevents index shifting issues)
+    // Sort in descending order to clear bottom rows first (prevents index shifting issues)
     var sortedRows = rows.OrderByDescending(r => r).ToList();
 
     foreach (int row in sortedRows)
@@ -92,6 +92,50 @@ public class GameBoard
       ClearLine(row);
     }
   }
+*/
+
+  public void ClearLines(IEnumerable<int> rows)
+  {
+    var rowsToClear = rows
+      .Where(row => row >= 0 && row < height)
+      .Distinct()
+      .ToHashSet();
+
+    if (rowsToClear.Count == 0)
+      return;
+
+    int destinationRow = 0;
+
+    // Copy rows that should remain toward the bottom.
+    for (int sourceRow = 0; sourceRow < height; sourceRow++)
+    {
+      if (rowsToClear.Contains(sourceRow))
+        continue;
+
+      for (int x = 0; x < width; x++)
+      {
+        grid[x, destinationRow] = grid[x, sourceRow];
+      }
+
+      destinationRow++;
+    }
+
+    // Clear the rows left at the top.
+    for (int y = destinationRow; y < height; y++)
+    {
+      for (int x = 0; x < width; x++)
+      {
+        grid[x, y] = CellState.Empty;
+      }
+    }
+
+    // Preserve one notification per cleared line.
+    for (int i = 0; i < rowsToClear.Count; i++)
+    {
+      LineCleared?.Invoke();
+    }
+  }
+
 
   /// <summary>
   /// Returns a snapshot of the entire board state.
