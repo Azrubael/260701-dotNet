@@ -22,6 +22,7 @@
   <Project Path="src/260901-ava2d/260901-ava2d.csproj" />
   <Project Path="src/260907-ava2d/260907-ava2d.csproj" />
   <Project Path="src/260914-tetris/260914-tetris.csproj" />
+  <Project Path="src/260921-tetris/260921-tetris.csproj" />
   <Project Path="src/avalonia1-tutorial/avalonia1-tutorial.csproj" />
   <Project Path="src/mslearn10-PetStore/mslearn10-PetStore.csproj" />
   <Project Path="src/mslearn11-TypeConversion/mslearn11-TypeConversion.csproj" />

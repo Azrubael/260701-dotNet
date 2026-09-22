@@ -1,0 +1,92 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="600" Height="537"
+        CanResize="False"
+        x:Class="_260921_tetris.Views.MainWindow"
+        Focusable="True"
+        KeyDown="WindowKeyDown"
+        Title="Avalonia Tetris!">
+
+  <Grid Background="Silver"
+            Margin="2,2,2,2"
+            ColumnDefinitions="136,284,*" >
+
+    <Border Grid.Column="0">
+        <TextBlock
+            x:Name="ScoreText"
+            Text="Score: 0    "
+            FontSize="24"
+            Foreground="DarkBlue"
+            Margin="5"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsVisible="False" />
+    </Border>
+
+    <Border x:Name="GameCanvasBorder"
+            Grid.Column="1"
+            Width="208" Height="508"
+            BorderBrush="LightBlue"
+            BorderThickness="4"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Margin="0,0,0,8"
+            IsVisible="False">
+
+      <Canvas x:Name="GameCanvas"
+              Width="200" Height="500"
+              Background="#000069"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Bottom"
+              IsVisible="False" />
+    </Border>
+
+    <Border Grid.Column="2"
+          x:Name="NextPieceBorder"
+          Margin="10,0,0,0"
+          Padding="10"
+          CornerRadius="5"
+          VerticalAlignment="Top"
+          IsVisible="False" >
+
+    <StackPanel Margin="0,50,0,0">
+      <TextBlock Text="Next piece"
+                 HorizontalAlignment="Center"
+                 FontSize="24"
+                 Foreground="DarkBlue"
+                 Margin="0,0,0,10"/>
+      <Canvas x:Name="NextPieceCanvas"
+              Width="130"
+              Height="200"
+              Background="DarkBlue"
+              VerticalAlignment="Center"
+              HorizontalAlignment="Center"/>
+    </StackPanel>
+
+    </Border>
+
+    <TextBlock x:Name="StartMessage"
+              Grid.Column="0"
+              Grid.ColumnSpan="3"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Text="Press 'N' to play, press 'Q' to close the application."
+              FontSize="18"
+              Foreground="Black" />
+
+    <Menu HorizontalAlignment="Left" VerticalAlignment="Top">
+      <MenuItem Header="_Game">
+        <MenuItem Header="_New" Click="OnNewGameClick" />
+        <MenuItem Header="_Pause" Click="OnPauseClick" />
+        <MenuItem Header="_Quit" Click="OnExitClick" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="FAQ" Click="OnFAQClick" />
+        <MenuItem Header="About" Click="OnAboutClick" />
+      </MenuItem>
+    </Menu>
+
+
+
+  </Grid>
+</Window>
