@@ -29,4 +29,5 @@
   <Project Path="src/mslearn12-variableData/mslearn12-variableData.csproj" />
   <Project Path="src/game_donut/game_donut.csproj" />
   <Project Path="src/game2_donut/game2_donut.csproj" />
+  <Project Path="src/music_hmm4_sailing/music_hmm4_sailing.csproj" />
 </Solution>
