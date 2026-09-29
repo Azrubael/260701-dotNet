@@ -78,6 +78,7 @@
       <MenuItem Header="_Game">
         <MenuItem Header="_New" Click="OnNewGameClick" />
         <MenuItem Header="_Pause" Click="OnPauseClick" />
+        <MenuItem Header="_Music" Click="OnMusicClick" />
         <MenuItem Header="_Quit" Click="OnExitClick" />
       </MenuItem>
       <MenuItem Header="_Help">

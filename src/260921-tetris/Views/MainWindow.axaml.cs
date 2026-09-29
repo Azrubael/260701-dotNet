@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using System.Threading.Tasks;
 using System;
 using _260921_tetris.Models;
+using System.Threading;
 
 namespace _260921_tetris.Views;
 
@@ -19,6 +20,8 @@ public partial class MainWindow : Window
   private readonly DispatcherTimer _timer;
   private Window? _gameOverDialog;
   private bool _isPaused = false;
+  private bool _isGameMusic = false;
+  private CancellationTokenSource? _musicCts;
   private const int MaxFallDelay = 1000;
   private const int MinFallDelay = 90;
   private int FallDelay { get; set; } = MaxFallDelay;
@@ -56,6 +59,47 @@ public partial class MainWindow : Window
     _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
     _timer.Start();
     DrawTetromino();
+  }
+
+
+  private void OnPauseClick(object? sender, RoutedEventArgs e)
+  {
+    TogglePause();
+  }
+
+
+  private void OnMusicClick(object? sender, RoutedEventArgs e)
+  {
+    ToggleMusic();
+  }
+
+
+  private void OnExitClick(object? sender, RoutedEventArgs e)
+  {
+    _timer.Stop();
+    _gameOverDialog?.Close();
+    _gameOverDialog = null;
+    Close();
+  }
+
+
+  private async void OnFAQClick(object? sender, RoutedEventArgs e)
+  {
+    await ShowInfoDialogAsync(
+      "Frequently Asked Questions",
+      "This game has no defined end.\nPress 'N' to play.\nPress 'P' to pause.\nPress 'Q' to close the application.\nAny other questions are useless.",
+      Colors.Blue,
+      16);
+  }
+
+
+  private async void OnAboutClick(object? sender, RoutedEventArgs e)
+  {
+    await ShowInfoDialogAsync(
+      "About this game",
+      "This application was created\nas a pet project\non 21 September 2026.",
+      Colors.Blue,
+      16);
   }
 
 
@@ -221,12 +265,6 @@ public partial class MainWindow : Window
   }
 
 
-  private void OnPauseClick(object? sender, RoutedEventArgs e)
-  {
-    TogglePause();
-  }
-
-
   private void TogglePause()
   {
     _isPaused = !_isPaused;
@@ -242,23 +280,28 @@ public partial class MainWindow : Window
   }
 
 
-  private async void OnFAQClick(object? sender, RoutedEventArgs e)
+  private void ToggleMusic()
   {
-    await ShowInfoDialogAsync(
-      "Frequently Asked Questions",
-      "This game has no defined end.\nPress 'N' to play.\nPress 'P' to pause.\nPress 'Q' to close the application.\nAny other questions are useless.",
-      Colors.Blue,
-      16);
-  }
+    _isGameMusic = !_isGameMusic;
+    if (!_isPaused && _isGameMusic)
+    {
+      if (_musicCts is not null)
+        return;
 
+      _musicCts = new CancellationTokenSource();
+      CancellationToken token = _musicCts.Token;
 
-  private async void OnAboutClick(object? sender, RoutedEventArgs e)
-  {
-    await ShowInfoDialogAsync(
-      "About this game",
-      "This application was created\nas a pet project\non 21 September 2026.",
-      Colors.Blue,
-      16);
+      _ = Task.Run(() =>
+      {
+        while (!token.IsCancellationRequested)
+          GameMusic.PlayMusic(token);
+      }, token);
+    }
+    else
+    {
+      _musicCts?.Cancel();
+      _musicCts = null;
+    }
   }
 
 
@@ -344,15 +387,6 @@ public partial class MainWindow : Window
       if (ReferenceEquals(_gameOverDialog, dialog))
         _gameOverDialog = null;
     }
-  }
-
-
-  private void OnExitClick(object? sender, RoutedEventArgs e)
-  {
-    _timer.Stop();
-    _gameOverDialog?.Close();
-    _gameOverDialog = null;
-    Close();
   }
 
 
