@@ -17,6 +17,7 @@ public partial class MainWindow : Window
   private const int BoardWidth = 10;
   private const int BoardHeight = 25;
   private GameLogicEngine Game = new(BoardWidth, BoardHeight);
+  private GameMusic gameMusic = new();
   private readonly DispatcherTimer _timer;
   private Window? _gameOverDialog;
   private bool _isPaused = false;
@@ -234,6 +235,11 @@ public partial class MainWindow : Window
         e.Handled = true;
         return;
 
+      case Key.M:
+        ToggleMusic();
+        e.Handled = true;
+        return;
+
       case Key.Space:
         if (!Game.DropPiece())
         {
@@ -283,6 +289,7 @@ public partial class MainWindow : Window
   private void ToggleMusic()
   {
     _isGameMusic = !_isGameMusic;
+    if (_isPaused) return;
     if (!_isPaused && _isGameMusic)
     {
       if (_musicCts is not null)
@@ -294,7 +301,7 @@ public partial class MainWindow : Window
       _ = Task.Run(() =>
       {
         while (!token.IsCancellationRequested)
-          GameMusic.PlayMusic(token);
+          gameMusic.PlayMusic(token);
       }, token);
     }
     else

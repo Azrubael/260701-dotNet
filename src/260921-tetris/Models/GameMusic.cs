@@ -25,8 +25,39 @@ partial class GameMusic
   static int MakeProgramChange(int channel, int program)
       => 0xC0 | channel | (program << 8);
 
+  readonly string KickPattern = "x...x...x...x.x.";
+  readonly string SnarePattern = "....x.......x..x";
+  readonly string HatPattern = "x.x.x.x.x.x.x.xx";
+  readonly string[] ThemeBars =
+  [
+    "A4 - C5 - E5 - A5 - G5 - E5 - D5 - E5 -",
+    "C5 - - - B4 - A4 - B4 - C5 - D5 - - -",
+    "C5 - A4 - F4 - A4 - C5 - F5 - E5 - C5 -",
+    "D5 - - - B4 - G4 - B4 - D5 - G5 - - -",
+    "A5 - - - G5 - E5 - C5 - E5 - A5 - C6 -",
+    "G5 - - - E5 - C5 - E5 - G5 - C6 - B5 -",
+    "B5 - A5 - G5 - D5 - B4 - D5 - G5 - A5 -",
+    "G#5 - - - E5 - B4 - G#4 - B4 - E5 - - -"
+  ];
 
-  public static void PlayMusic(CancellationToken cancellationToken)
+  readonly string[] PassageBars1 =
+  [
+    "E5 - G5 - A5 - C6 - B5 - A5 - G5 - E5 -",
+    "F5 - A5 - C6 - A5 - G5 - E5 - D5 - E5 -",
+    "D5 - F5 - A5 - D6 - C6 - A5 - F5 - A5 -",
+    "E5 - G#5 - B5 - D6 - C6 - B5 - G#5 - B5 -"
+  ];
+
+  readonly string[] PassageBars2 =
+  [
+    "C5 - E5 G5 - A5 - C6 - D6 - C6 A5 - G5 -",
+    "A5 - G5 - E5 - C5 - D5 - E5 G5 - A5 - G5",
+    "F5 - A5 C6 - D6 - C6 - A5 - F5 G5 - A5 -",
+    "G#5 - B5 - D6 - E6 - D6 C6 - B5 - G#5 -"
+  ];
+
+
+  public void PlayMusic(CancellationToken cancellationToken)
   {
     int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
     if (openResult != 0)
@@ -46,21 +77,12 @@ partial class GameMusic
         return;
       }
 
-      const int stepMs = 60000 / 152 / 4;
-      string kickPattern = "x...x...x...x.x.";
-      string snarePattern = "....x.......x..x";
-      string hatPattern = "x.x.x.x.x.x.x.xx";
-      string[] leadBars =
-      [
-        "A4 - C5 - E5 - A5 - G5 - E5 - D5 - E5 -",
-        "C5 - - - B4 - A4 - B4 - C5 - D5 - - -",
-        "C5 - A4 - F4 - A4 - C5 - F5 - E5 - C5 -",
-        "D5 - - - B4 - G4 - B4 - D5 - G5 - - -",
-        "A5 - - - G5 - E5 - C5 - E5 - A5 - C6 -",
-        "G5 - - - E5 - C5 - E5 - G5 - C6 - B5 -",
-        "B5 - A5 - G5 - D5 - B4 - D5 - G5 - A5 -",
-        "G#5 - - - E5 - B4 - G#4 - B4 - E5 - - -"
-      ];
+      const int stepMs = 60000 / 38 / 16;
+
+      string[] leadBars = [.. ThemeBars,
+          .. PassageBars1, .. ThemeBars,
+          .. PassageBars2, .. ThemeBars,
+          .. PassageBars1, .. PassageBars2];
 
       var melody = new List<(int note, int ms, int vel)>();
       foreach (string bar in leadBars)
@@ -85,13 +107,13 @@ partial class GameMusic
           }
         }
 
-        if (kickPattern[step] == 'x')
+        if (KickPattern[step] == 'x')
           PlayDrumHit(hMidi, 36, step is 0 or 8 ? 95 : 80);
 
-        if (snarePattern[step] == 'x')
-          PlayDrumHit(hMidi, 38, step == 4 ? 100 : step == 16 ? 85 : 80);
+        if (SnarePattern[step] == 'x')
+          PlayDrumHit(hMidi, 38, step == 4 ? 100 : step == 8 ? 85 : 80);
 
-        if (hatPattern[step] == 'x')
+        if (HatPattern[step] == 'x')
           PlayDrumHit(hMidi, 42, step % 4 == 0 ? 75 : 55);
 
         // Thread.Sleep(ms);

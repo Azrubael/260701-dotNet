@@ -22,7 +22,154 @@ partial class Program
   static int MakeProgramChange(int channel, int program)
       => 0xC0 | channel | (program << 8);
 
+
   static void Main()
+  {
+    string KickPattern = "x...x...x...x.x.";
+    string SnarePattern = "....x.......x..x";
+    string HatPattern = "x.x.x.x.x.x.x.xx";
+    string[] ThemeBars =
+    [
+      "A4 - C5 - E5 - A5 - G5 - E5 - D5 - E5 -",
+      "C5 - - - B4 - A4 - B4 - C5 - D5 - - -",
+      "C5 - A4 - F4 - A4 - C5 - F5 - E5 - C5 -",
+      "D5 - - - B4 - G4 - B4 - D5 - G5 - - -",
+      "A5 - - - G5 - E5 - C5 - E5 - A5 - C6 -",
+      "G5 - - - E5 - C5 - E5 - G5 - C6 - B5 -",
+      "B5 - A5 - G5 - D5 - B4 - D5 - G5 - A5 -",
+      "G#5 - - - E5 - B4 - G#4 - B4 - E5 - - -"
+    ];
+
+    string[] PassageBars1 =
+    [
+      "E5 - G5 - A5 - C6 - B5 - A5 - G5 - E5 -",
+      "F5 - A5 - C6 - A5 - G5 - E5 - D5 - E5 -",
+      "D5 - F5 - A5 - D6 - C6 - A5 - F5 - A5 -",
+      "E5 - G#5 - B5 - D6 - C6 - B5 - G#5 - B5 -"
+    ];
+
+    string[] PassageBars2 =
+    [
+      "C5 - E5 G5 - A5 - C6 - D6 - C6 A5 - G5 -",
+      "A5 - G5 - E5 - C5 - D5 - E5 G5 - A5 - G5",
+      "F5 - A5 C6 - D6 - C6 - A5 - F5 G5 - A5 -",
+      "G#5 - B5 - D6 - E6 - D6 C6 - B5 G#5 - C5 -"
+    ];
+
+    string[] leadBars = [.. ThemeBars,
+      .. PassageBars1, .. ThemeBars,
+      .. PassageBars2, .. ThemeBars,
+      .. PassageBars1, .. PassageBars2];
+
+    Console.WriteLine("""
+        Select the melody to play:
+        f - FirstMelody
+        s - SecondMelody
+        k - KalynaMelody
+        """);
+    var selection = char.ToLowerInvariant(Console.ReadKey(intercept: true).KeyChar);
+    Console.WriteLine();
+
+    switch (selection)
+    {
+      case 'f':
+        FirstMelody(leadBars, KickPattern, SnarePattern, HatPattern);
+        break;
+      case 's':
+        SecondMelody();
+        break;
+      case 'k':
+        KalynaMelody();
+        break;
+      default:
+        Console.WriteLine("Unknown selection.");
+        break;
+    }
+
+  }
+
+
+  static void FirstMelody(
+      string[] leadBars,
+      string KickPattern,
+      string SnarePattern,
+      string HatPattern)
+  {
+    int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
+    if (openResult != 0)
+    {
+      Console.WriteLine($"Could not open MIDI device. Error: {openResult}");
+      return;
+    }
+
+    try
+    {
+      int ch = 0;
+
+      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(ch, 87));
+      if (programResult != 0)
+      {
+        Console.WriteLine($"Program change failed. Error: {programResult}");
+        return;
+      }
+
+      const int stepMs = 60000 / 38 / 16;
+
+      var melody = new List<(int note, int ms, int vel)>();
+      foreach (string bar in leadBars)
+      {
+        foreach (string token in bar.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+          melody.Add((token == "-" ? -1 : ParsePitch(token), stepMs, 36));
+        }
+      }
+      for (int i = 0; i < melody.Count; i++)
+      {
+        var (note, ms, vel) = melody[i];
+        int step = i % 16;
+
+        if (note >= 0)
+        {
+          int noteOnResult = midiOutShortMsg(hMidi, MakeNoteOn(ch, note, vel));
+          if (noteOnResult != 0)
+          {
+            Console.WriteLine($"Note on failed (note {note}). Error: {noteOnResult}");
+            break;
+          }
+        }
+
+        if (KickPattern[step] == 'x')
+          PlayDrumHit(hMidi, 36, step is 0 or 8 ? 95 : 80);
+
+        if (SnarePattern[step] == 'x')
+          PlayDrumHit(hMidi, 38, step == 4 ? 100 : step == 8 ? 85 : 80);
+
+        if (HatPattern[step] == 'x')
+          PlayDrumHit(hMidi, 42, step % 4 == 0 ? 75 : 55);
+
+        Thread.Sleep(ms);
+
+        if (note >= 0)
+        {
+          int noteOffResult = midiOutShortMsg(hMidi, MakeNoteOff(ch, note));
+          if (noteOffResult != 0)
+          {
+            Console.WriteLine($"Note off failed (note {note}). Error: {noteOffResult}");
+            break;
+          }
+        }
+      }
+    }
+    finally
+    {
+      int closeResult = midiOutClose(hMidi);
+      if (closeResult != 0)
+        Console.WriteLine($"Could not close MIDI device. Error: {closeResult}");
+    }
+  }
+
+
+  static void SecondMelody()
   {
     int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
     if (openResult != 0)
@@ -42,7 +189,7 @@ partial class Program
         return;
       }
 
-      const int stepMs = 60000 / 152 / 4;
+      const int stepMs = 60000 / 38 / 16;
       string kickPattern = "x...x...x...x.x.";
       string snarePattern = "....x.......x..x";
       string hatPattern = "x.x.x.x.x.x.x.xx";
@@ -66,7 +213,7 @@ partial class Program
           melody.Add((token == "-" ? -1 : ParsePitch(token), stepMs, 36));
         }
       }
-for (int i = 0; i < melody.Count; i++)
+      for (int i = 0; i < melody.Count; i++)
       {
         var (note, ms, vel) = melody[i];
         int step = i % 16;
@@ -89,14 +236,6 @@ for (int i = 0; i < melody.Count; i++)
 
         if (hatPattern[step] == 'x')
           PlayDrumHit(hMidi, 42, step % 4 == 0 ? 75 : 55);
-        // if (kickPattern[step] == 'x')
-        //   PlayDrumHit(hMidi, 42, step is 0 or 8 ? 124 : 108);
-
-        // if (snarePattern[step] == 'x')
-        //   PlayDrumHit(hMidi, 80, step == 4 ? 120 : step == 15 ? 78 : 110);
-
-        // if (hatPattern[step] == 'x')
-        //   PlayDrumHit(hMidi, 87, step % 4 == 0 ? 96 : 72);
 
         Thread.Sleep(ms);
 
@@ -119,6 +258,124 @@ for (int i = 0; i < melody.Count; i++)
     }
   }
 
+
+  static void KalynaMelody()
+  {
+    int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
+    if (openResult != 0)
+    {
+      Console.WriteLine($"Could not open MIDI device. Error: {openResult}");
+      return;
+    }
+
+    try
+    {
+      const byte channel = 0;      // Channel 1
+      const byte instrument = 0;   // General MIDI 0: Acoustic Grand Piano
+      const byte velocity = 100;   // Note volume (0–127)
+
+      // Set Instrument (Program Change)
+      SendMidiMsg(hMidi, 0xC0 | channel, instrument, 0);
+
+      // Tempo setup (2/4 time, Moderato ~100 BPM)
+      const int tempoBpm = 80;
+      const int quarterMs = 60000 / tempoBpm; // 600 ms
+      const int eighthMs = quarterMs / 2;      // 300 ms
+      const int halfMs = quarterMs * 2;        // 1200 ms
+
+      // MIDI Note Numbers (Octave 4 & 5)
+      const byte noteA4 = 69;
+      const byte noteB4 = 71;
+      const byte noteCS5 = 73; // C#5
+      const byte noteD5 = 74; // D5
+      const byte noteE5 = 76; // E5
+      const byte noteFS5 = 78; // F#5
+
+      // Sequence based on the sheet music: (MIDI Note, Duration in ms)
+      (byte Pitch, int Duration)[] score =
+      [
+          // Line 1: "Oi u luzi chervona kalyna,"
+          (noteA4,  eighthMs),
+                (noteA4,  eighthMs),
+                (noteD5,  quarterMs),
+                (noteCS5, eighthMs),
+                (noteB4,  eighthMs),
+                (noteA4,  eighthMs),
+                (noteB4,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteD5,  halfMs),
+
+                // Line 2: "oi u luzi chervona kalyna, tam sto-"
+                (noteD5,  eighthMs),
+                (noteB4,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteD5,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteB4,  eighthMs),
+                (noteA4,  eighthMs),
+                (noteB4,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteD5,  eighthMs),
+                (noteE5,  quarterMs),
+
+                // Line 3: "-yala moloda divchyna, oi u"
+                (noteFS5, eighthMs),
+                (noteE5,  eighthMs),
+                (noteD5,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteB4,  eighthMs),
+                (noteA4,  eighthMs),
+                (noteA4,  halfMs),
+                (noteA4,  eighthMs),
+                (noteA4,  eighthMs),
+
+                // Line 4: "luzi chervona kalyna, tam stoyala mo-"
+                (noteD5,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteB4,  eighthMs),
+                (noteA4,  eighthMs),
+                (noteB4,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteD5,  eighthMs),
+                (noteE5,  eighthMs),
+                (noteFS5, eighthMs),
+                (noteE5,  eighthMs),
+
+                // Line 5: "-loda divchyna."
+                (noteD5,  eighthMs),
+                (noteCS5, eighthMs),
+                (noteB4,  eighthMs),
+                (noteA4,  eighthMs),
+                (noteD5,  halfMs + quarterMs)
+      ];
+
+      foreach (var (pitch, duration) in score)
+      {
+        // Send Note On
+        SendMidiMsg(hMidi, 0x90 | channel, pitch, velocity);
+
+        // Hold note for 90% of duration to allow natural decay/articulation
+        Thread.Sleep((int)(duration * 0.9));
+
+        // Send Note Off
+        SendMidiMsg(hMidi, 0x80 | channel, pitch, 0);
+
+        // Brief gap between notes
+        Thread.Sleep((int)(duration * 0.1));
+      }
+    }
+    finally
+    {
+      midiOutClose(hMidi);
+    }
+  }
+
+  private static void SendMidiMsg(IntPtr hMidi, int status, int data1, int data2)
+  {
+    // MIDI short message format: 0x00ssd1d2 (Data2 | Data1 << 8 | Status << 16)
+    int message = status | (data1 << 8) | (data2 << 16);
+    midiOutShortMsg(hMidi, message);
+  }
 
   static int ParsePitch(string token)
   {
@@ -168,7 +425,7 @@ for (int i = 0; i < melody.Count; i++)
   }
 
 
-    static void PlayDrumHit(IntPtr hMidi, int note, int velocity)
+  static void PlayDrumHit(IntPtr hMidi, int note, int velocity)
   {
     const int percussionChannel = 9; // MIDI channel 10
 

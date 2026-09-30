@@ -1,0 +1,6 @@
+Chervona Kalyna
+A – A – D – C# – B – A – B – C# – D
+D – B – C# – D – C# – B – A – B – C# – D – E
+F# – E – D – C# – B – A – A – A
+D – C# – B – A – B – C# – D – E – F# – E
+D – C# – B – A – D
