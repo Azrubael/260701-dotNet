@@ -270,112 +270,132 @@ partial class Program
 
     try
     {
-      const byte channel = 0;      // Channel 1
-      const byte instrument = 0;   // General MIDI 0: Acoustic Grand Piano
-      const byte velocity = 100;   // Note volume (0–127)
+      int ch = 0;
 
-      // Set Instrument (Program Change)
-      SendMidiMsg(hMidi, 0xC0 | channel, instrument, 0);
+      // Program 0 = Acoustic Grand Piano
+      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(ch, 0));
+      if (programResult != 0)
+      {
+        Console.WriteLine($"Program change failed. Error: {programResult}");
+        return;
+      }
 
-      // Tempo setup (2/4 time, Moderato ~100 BPM)
-      const int tempoBpm = 80;
+      // Tempo: Moderato (~100 BPM in 2/4 time)
+      const int tempoBpm = 100;
       const int quarterMs = 60000 / tempoBpm; // 600 ms
       const int eighthMs = quarterMs / 2;      // 300 ms
       const int halfMs = quarterMs * 2;        // 1200 ms
 
-      // MIDI Note Numbers (Octave 4 & 5)
-      const byte noteA4 = 69;
-      const byte noteB4 = 71;
-      const byte noteCS5 = 73; // C#5
-      const byte noteD5 = 74; // D5
-      const byte noteE5 = 76; // E5
-      const byte noteFS5 = 78; // F#5
-
-      // Sequence based on the sheet music: (MIDI Note, Duration in ms)
-      (byte Pitch, int Duration)[] score =
+      // Melody notes with exact pitch and duration matching the sheet music (D Major)
+      (string pitch, int ms)[] score =
       [
-          // Line 1: "Oi u luzi chervona kalyna,"
-          (noteA4,  eighthMs),
-                (noteA4,  eighthMs),
-                (noteD5,  quarterMs),
-                (noteCS5, eighthMs),
-                (noteB4,  eighthMs),
-                (noteA4,  eighthMs),
-                (noteB4,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteD5,  halfMs),
+        // Line 1: "Oi u luzi chervona kalyna,"
+        ("A4",  eighthMs),
+        ("A4",  eighthMs),
+        ("D5",  quarterMs),
+        ("C#5", eighthMs),
+        ("B4",  eighthMs),
+        ("A4",  eighthMs),
+        ("B4",  eighthMs),
+        ("C#5", eighthMs),
+        ("D5",  halfMs),
 
-                // Line 2: "oi u luzi chervona kalyna, tam sto-"
-                (noteD5,  eighthMs),
-                (noteB4,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteD5,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteB4,  eighthMs),
-                (noteA4,  eighthMs),
-                (noteB4,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteD5,  eighthMs),
-                (noteE5,  quarterMs),
+        // Line 2: "oi u luzi chervona kalyna, tam sto-"
+        ("D5",  eighthMs),
+        ("B4",  eighthMs),
+        ("C#5", eighthMs),
+        ("D5",  eighthMs),
+        ("C#5", eighthMs),
+        ("B4",  eighthMs),
+        ("A4",  eighthMs),
+        ("B4",  eighthMs),
+        ("C#5", eighthMs),
+        ("D5",  eighthMs),
+        ("E5",  quarterMs),
 
-                // Line 3: "-yala moloda divchyna, oi u"
-                (noteFS5, eighthMs),
-                (noteE5,  eighthMs),
-                (noteD5,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteB4,  eighthMs),
-                (noteA4,  eighthMs),
-                (noteA4,  halfMs),
-                (noteA4,  eighthMs),
-                (noteA4,  eighthMs),
+        // Line 3: "-yala moloda divchyna, oi u"
+        ("F#5", eighthMs),
+        ("E5",  eighthMs),
+        ("D5",  eighthMs),
+        ("C#5", eighthMs),
+        ("B4",  eighthMs),
+        ("A4",  eighthMs),
+        ("A4",  halfMs),
+        ("A4",  eighthMs),
+        ("A4",  eighthMs),
 
-                // Line 4: "luzi chervona kalyna, tam stoyala mo-"
-                (noteD5,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteB4,  eighthMs),
-                (noteA4,  eighthMs),
-                (noteB4,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteD5,  eighthMs),
-                (noteE5,  eighthMs),
-                (noteFS5, eighthMs),
-                (noteE5,  eighthMs),
+        // Line 4: "luzi chervona kalyna, tam stoyala mo-"
+        ("D5",  eighthMs),
+        ("C#5", eighthMs),
+        ("B4",  eighthMs),
+        ("A4",  eighthMs),
+        ("B4",  eighthMs),
+        ("C#5", eighthMs),
+        ("D5",  eighthMs),
+        ("E5",  eighthMs),
+        ("F#5", eighthMs),
+        ("E5",  eighthMs),
 
-                // Line 5: "-loda divchyna."
-                (noteD5,  eighthMs),
-                (noteCS5, eighthMs),
-                (noteB4,  eighthMs),
-                (noteA4,  eighthMs),
-                (noteD5,  halfMs + quarterMs)
+        // Line 5: "-loda divchyna."
+        ("D5",  eighthMs),
+        ("C#5", eighthMs),
+        ("B4",  eighthMs),
+        ("A4",  eighthMs),
+        ("D5",  halfMs + quarterMs)
       ];
 
-      foreach (var (pitch, duration) in score)
+      const int leadVelocity = 90;
+      int noteCount = 0;
+
+      foreach (var (pitchToken, ms) in score)
       {
-        // Send Note On
-        SendMidiMsg(hMidi, 0x90 | channel, pitch, velocity);
+        int note = ParsePitch(pitchToken);
 
-        // Hold note for 90% of duration to allow natural decay/articulation
-        Thread.Sleep((int)(duration * 0.9));
+        int noteOnResult = midiOutShortMsg(hMidi, MakeNoteOn(ch, note, leadVelocity));
+        if (noteOnResult != 0)
+        {
+          Console.WriteLine($"Note on failed (note {note}). Error: {noteOnResult}");
+          break;
+        }
 
-        // Send Note Off
-        SendMidiMsg(hMidi, 0x80 | channel, pitch, 0);
+        // Add a march-style bass drum beat (MIDI note 36) on every downbeat (every 2 notes)
+        if (noteCount % 2 == 0)
+        {
+          PlayDrumHit(hMidi, 36, 85);
+        }
 
-        // Brief gap between notes
-        Thread.Sleep((int)(duration * 0.1));
+        // Add a light hi-hat hit (MIDI note 42) on every eighth-note step
+        PlayDrumHit(hMidi, 42, 50);
+
+        noteCount++;
+
+        // Articulate lead note (90% sounding duration, 10% silence before next note)
+        int playMs = (int)(ms * 0.9);
+        int restMs = ms - playMs;
+
+        Thread.Sleep(playMs);
+
+        int noteOffResult = midiOutShortMsg(hMidi, MakeNoteOff(ch, note));
+        if (noteOffResult != 0)
+        {
+          Console.WriteLine($"Note off failed (note {note}). Error: {noteOffResult}");
+          break;
+        }
+
+        if (restMs > 0)
+        {
+          Thread.Sleep(restMs);
+        }
       }
     }
     finally
     {
-      midiOutClose(hMidi);
+      int closeResult = midiOutClose(hMidi);
+      if (closeResult != 0)
+        Console.WriteLine($"Could not close MIDI device. Error: {closeResult}");
     }
   }
 
-  private static void SendMidiMsg(IntPtr hMidi, int status, int data1, int data2)
-  {
-    // MIDI short message format: 0x00ssd1d2 (Data2 | Data1 << 8 | Status << 16)
-    int message = status | (data1 << 8) | (data2 << 16);
-    midiOutShortMsg(hMidi, message);
-  }
 
   static int ParsePitch(string token)
   {
@@ -384,6 +404,8 @@ partial class Program
 
     int semitone = pitch switch
     {
+      // До-Ре-Мі-Фа-Соль-Ля-Си
+      // C -D -E -F -G   -A -B
       "C" => 0,
       "C#" => 1,
       "D" => 2,
