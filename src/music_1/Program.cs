@@ -259,7 +259,7 @@ partial class Program
   }
 
 
-  static void KalynaMelody()
+static void KalynaMelody()
   {
     int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
     if (openResult != 0)
@@ -280,111 +280,97 @@ partial class Program
         return;
       }
 
-      // Tempo: Moderato (~100 BPM in 2/4 time)
-      const int tempoBpm = 100;
-      const int quarterMs = 60000 / tempoBpm; // 600 ms
-      const int eighthMs = quarterMs / 2;      // 300 ms
-      const int halfMs = quarterMs * 2;        // 1200 ms
+      // Base rhythmic unit: Eighth note (300 ms at ~100 BPM)
+      const int eighthMs = 300;
+      const int leadVelocity = 90;
 
-      // Melody notes with exact pitch and duration matching the sheet music (D Major)
-      (string pitch, int ms)[] score =
+      // Corrected Score: (Pitch Token, Duration in Eighth Notes)
+      (string pitch, int eighths)[] score =
       [
         // Line 1: "Oi u luzi chervona kalyna,"
-        ("A4",  eighthMs),
-        ("A4",  eighthMs),
-        ("D5",  quarterMs),
-        ("C#5", eighthMs),
-        ("B4",  eighthMs),
-        ("A4",  eighthMs),
-        ("B4",  eighthMs),
-        ("C#5", eighthMs),
-        ("D5",  halfMs),
+        ("A4", 1), ("A4", 1),
+        ("D5", 4), // Half note
+        ("C#5", 1), ("B4", 1), ("A4", 1), ("B4", 1),
+        ("C#5", 1), ("D5", 1),
+        ("E5", 8), // Half note tied to half note (4 + 4)
 
         // Line 2: "oi u luzi chervona kalyna, tam sto-"
-        ("D5",  eighthMs),
-        ("B4",  eighthMs),
-        ("C#5", eighthMs),
-        ("D5",  eighthMs),
-        ("C#5", eighthMs),
-        ("B4",  eighthMs),
-        ("A4",  eighthMs),
-        ("B4",  eighthMs),
-        ("C#5", eighthMs),
-        ("D5",  eighthMs),
-        ("E5",  quarterMs),
+        ("D5", 1), ("B4", 1),
+        ("C#5", 1), ("D5", 1), ("C#5", 1), ("B4", 1),
+        ("A4", 1), ("B4", 1), ("C#5", 1), ("D5", 1),
+        ("E5", 1), ("E5", 1),
 
         // Line 3: "-yala moloda divchyna, oi u"
-        ("F#5", eighthMs),
-        ("E5",  eighthMs),
-        ("D5",  eighthMs),
-        ("C#5", eighthMs),
-        ("B4",  eighthMs),
-        ("A4",  eighthMs),
-        ("A4",  halfMs),
-        ("A4",  eighthMs),
-        ("A4",  eighthMs),
+        ("F#5", 1), ("E5", 1),
+        ("D5", 1), ("C#5", 1),
+        ("B4", 1), ("A4", 1),
+        ("B4", 2), // Quarter note
+        ("B4", 1), ("-", 1), ("F#4", 1), ("F#4", 1), // 8th note, 8th rest, pickup "oi u"
 
         // Line 4: "luzi chervona kalyna, tam stoyala mo-"
-        ("D5",  eighthMs),
-        ("C#5", eighthMs),
-        ("B4",  eighthMs),
-        ("A4",  eighthMs),
-        ("B4",  eighthMs),
-        ("C#5", eighthMs),
-        ("D5",  eighthMs),
-        ("E5",  eighthMs),
-        ("F#5", eighthMs),
-        ("E5",  eighthMs),
+        ("B4", 1), ("B4", 1),
+        ("D5", 1), ("C#5", 1),
+        ("B4", 1), ("A4", 1),
+        ("B4", 1), ("C#5", 1),
+        ("D5", 1), ("E5", 1),
+        ("F#5", 1), ("E5", 1),
 
         // Line 5: "-loda divchyna."
-        ("D5",  eighthMs),
-        ("C#5", eighthMs),
-        ("B4",  eighthMs),
-        ("A4",  eighthMs),
-        ("D5",  halfMs + quarterMs)
+        ("D5", 1), ("C#5", 1),
+        ("B4", 1), ("A4", 1),
+        ("B4", 8) // Half note tied to half note to resolve in B minor
       ];
 
-      const int leadVelocity = 90;
-      int noteCount = 0;
+      // Time tracker to keep drums perfectly on beat
+      int currentEighth = 0;
 
-      foreach (var (pitchToken, ms) in score)
+      foreach (var (pitchToken, eighths) in score)
       {
-        int note = ParsePitch(pitchToken);
+        bool isRest = pitchToken == "-";
+        int note = isRest ? -1 : ParsePitch(pitchToken);
 
-        int noteOnResult = midiOutShortMsg(hMidi, MakeNoteOn(ch, note, leadVelocity));
-        if (noteOnResult != 0)
+        if (!isRest)
         {
-          Console.WriteLine($"Note on failed (note {note}). Error: {noteOnResult}");
-          break;
+          int noteOnResult = midiOutShortMsg(hMidi, MakeNoteOn(ch, note, leadVelocity));
+          if (noteOnResult != 0) break;
         }
 
-        // Add a march-style bass drum beat (MIDI note 36) on every downbeat (every 2 notes)
-        if (noteCount % 2 == 0)
+        // Step through the duration of the note in eighth-note increments
+        for (int i = 0; i < eighths; i++)
         {
-          PlayDrumHit(hMidi, 36, 85);
-        }
+          // Play a Kick drum exactly on every quarter-note beat (every 2 eighths)
+          if (currentEighth % 2 == 0)
+          {
+            PlayDrumHit(hMidi, 36, 85);
+          }
+          // Play Hi-hat evenly on every eighth note
+          PlayDrumHit(hMidi, 42, 50);
 
-        // Add a light hi-hat hit (MIDI note 42) on every eighth-note step
-        PlayDrumHit(hMidi, 42, 50);
+          // Articulation logic: only cut off the note briefly at the VERY end of its duration
+          if (i == eighths - 1)
+          {
+            int playMs = (int)(eighthMs * 0.85);
+            int restMs = eighthMs - playMs;
 
-        noteCount++;
+            Thread.Sleep(playMs);
+            if (!isRest)
+            {
+              int noteOffResult = midiOutShortMsg(hMidi, MakeNoteOff(ch, note));
+              if (noteOffResult != 0)
+              {
+                Console.WriteLine($"Note off failed (note {note}). Error: {noteOffResult}");
+                return;
+              }
+            }
+            Thread.Sleep(restMs);
+          }
+          else
+          {
+            // If the note spans multiple eighths (e.g. half notes), hold it continuously
+            Thread.Sleep(eighthMs);
+          }
 
-        // Articulate lead note (90% sounding duration, 10% silence before next note)
-        int playMs = (int)(ms * 0.9);
-        int restMs = ms - playMs;
-
-        Thread.Sleep(playMs);
-
-        int noteOffResult = midiOutShortMsg(hMidi, MakeNoteOff(ch, note));
-        if (noteOffResult != 0)
-        {
-          Console.WriteLine($"Note off failed (note {note}). Error: {noteOffResult}");
-          break;
-        }
-
-        if (restMs > 0)
-        {
-          Thread.Sleep(restMs);
+          currentEighth++;
         }
       }
     }
