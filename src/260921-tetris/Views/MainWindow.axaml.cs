@@ -17,7 +17,7 @@ public partial class MainWindow : Window
   private const int BoardWidth = 10;
   private const int BoardHeight = 25;
   private GameLogicEngine Game = new(BoardWidth, BoardHeight);
-  private GameMusic gameMusic = new();
+  private readonly GameMusic gameMusic = new();
   private readonly DispatcherTimer _timer;
   private Window? _gameOverDialog;
   private bool _isPaused = false;
@@ -123,9 +123,9 @@ public partial class MainWindow : Window
   {
     _score++;
     ScoreText.Text = $"Score: {_score,-5}";
-
-    FallDelay = Math.Max(MinFallDelay, FallDelay - 5);
+    FallDelay = Math.Max(MinFallDelay, FallDelay - 4);
     _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
+    GameMusic.MagicSound();
   }
 
 
