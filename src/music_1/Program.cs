@@ -22,13 +22,23 @@ partial class Program
   static int MakeProgramChange(int channel, int program)
       => 0xC0 | channel | (program << 8);
 
+  /// <summary>
+  /// Makes the sount fade out with "value".
+  /// </summary>
+  /// <param name="channel"></param>
+  /// <param name="program"></param>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  static int MakeControlChange(int channel, int program, int value)
+    => 0xB0 | channel | (program << 8) | (value << 16);
+
 
   static void Main()
   {
     string KickPattern = "x...x...x...x.x.";
     string SnarePattern = "....x.......x..x";
     string HatPattern = "x.x.x.x.x.x.x.xx";
-    string[] ThemeBars =
+    string[] FirstMelodyBars =
     [
       "A4 - C5 - E5 - A5 - G5 - E5 - D5 - E5 -",
       "C5 - - - B4 - A4 - B4 - C5 - D5 - - -",
@@ -56,9 +66,9 @@ partial class Program
       "G#5 - B5 - D6 - E6 - D6 C6 - B5 G#5 - C5 -"
     ];
 
-    string[] leadBars = [.. ThemeBars,
-      .. PassageBars1, .. ThemeBars,
-      .. PassageBars2, .. ThemeBars,
+    string[] FirstThemeLeadBars = [.. FirstMelodyBars,
+      .. PassageBars1, .. FirstMelodyBars,
+      .. PassageBars2, .. FirstMelodyBars,
       .. PassageBars1, .. PassageBars2];
 
     Console.WriteLine("""
@@ -66,6 +76,7 @@ partial class Program
         f - FirstMelody
         s - SecondMelody
         k - KalynaMelody
+        m - MagicSound
         """);
     var selection = char.ToLowerInvariant(Console.ReadKey(intercept: true).KeyChar);
     Console.WriteLine();
@@ -73,13 +84,16 @@ partial class Program
     switch (selection)
     {
       case 'f':
-        FirstMelody(leadBars, KickPattern, SnarePattern, HatPattern);
+        FirstMelody(FirstThemeLeadBars, KickPattern, SnarePattern, HatPattern);
         break;
       case 's':
         SecondMelody();
         break;
       case 'k':
         KalynaMelody();
+        break;
+      case 'm':
+        MagicSound();
         break;
       default:
         Console.WriteLine("Unknown selection.");
@@ -259,7 +273,7 @@ partial class Program
   }
 
 
-static void KalynaMelody()
+  static void KalynaMelody()
   {
     int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
     if (openResult != 0)
@@ -280,51 +294,133 @@ static void KalynaMelody()
         return;
       }
 
-      // Base rhythmic unit: Eighth note (300 ms at ~100 BPM)
-      const int eighthMs = 300;
-      const int leadVelocity = 90;
+      const int eighthMs = 150;
+      const int leadVelocity = 100;
 
-      // Corrected Score: (Pitch Token, Duration in Eighth Notes)
-      (string pitch, int eighths)[] score =
+      (string pitch, int eighths)[] kalynaBars1 =
       [
-        // Line 1: "Oi u luzi chervona kalyna,"
-        ("A4", 1), ("A4", 1),
-        ("D5", 4), // Half note
-        ("C#5", 1), ("B4", 1), ("A4", 1), ("B4", 1),
-        ("C#5", 1), ("D5", 1),
-        ("E5", 8), // Half note tied to half note (4 + 4)
+        // --- Measures 1 to 4 (4/4 time) ---
+        // "Oi u lu - zi cher-vo-na ka-li - na"
+        ("E4", 2), ("E4", 2), ("F#4", 3), ("E4", 1),
+        ("B4", 2), ("A4", 2), ("G4", 2), ("F#4", 2),
+        // "po - xi-li - la - sia,"
+        ("G4", 3), ("F#4", 1), ("E4", 2), ("E4", 2),
+        ("E4", 6), ("-", 2), // Dotted half note + quarter rest
 
-        // Line 2: "oi u luzi chervona kalyna, tam sto-"
-        ("D5", 1), ("B4", 1),
-        ("C#5", 1), ("D5", 1), ("C#5", 1), ("B4", 1),
-        ("A4", 1), ("B4", 1), ("C#5", 1), ("D5", 1),
-        ("E5", 1), ("E5", 1),
-
-        // Line 3: "-yala moloda divchyna, oi u"
-        ("F#5", 1), ("E5", 1),
-        ("D5", 1), ("C#5", 1),
-        ("B4", 1), ("A4", 1),
-        ("B4", 2), // Quarter note
-        ("B4", 1), ("-", 1), ("F#4", 1), ("F#4", 1), // 8th note, 8th rest, pickup "oi u"
-
-        // Line 4: "luzi chervona kalyna, tam stoyala mo-"
-        ("B4", 1), ("B4", 1),
-        ("D5", 1), ("C#5", 1),
-        ("B4", 1), ("A4", 1),
-        ("B4", 1), ("C#5", 1),
-        ("D5", 1), ("E5", 1),
-        ("F#5", 1), ("E5", 1),
-
-        // Line 5: "-loda divchyna."
-        ("D5", 1), ("C#5", 1),
-        ("B4", 1), ("A4", 1),
-        ("B4", 8) // Half note tied to half note to resolve in B minor
+        // --- Measures 5 to 8 (4/4 & 2/4 time) ---
+        // "Cho-hos na - sha slav-na Uk-ra - i - na"
+        ("E4", 2), ("G4", 2), ("B4", 3), ("A4", 1),
+        ("B4", 2), ("A4", 2), ("G4", 2), ("F#4", 2),
+        // "za - zhu-ri - la - sia."
+        ("G4", 3), ("F#4", 1), ("E4", 2), ("E4", 2),
+        ("E4", 3), ("-", 1), // Measure 8 (2/4 time): Quarter tied to eighth, then eighth rest
       ];
 
-      // Time tracker to keep drums perfectly on beat
+      (string pitch, int eighths)[] kalynaBars1mod =
+      [
+        // --- Measures 1 to 4 (4/4 time) ---
+        // "Oi u lu - zi cher-vo-na ka-li - na"
+        ("E4", 2), ("G4", 2), ("B4", 3), ("A4", 1),
+        ("B4", 2), ("A4", 2), ("G4", 2), ("F#4", 2),
+        // "po - xi-li - la - sia,"
+        ("G4", 3), ("F#4", 1), ("E4", 2), ("E4", 2),
+        ("E4", 6), ("-", 2), // Dotted half note + quarter rest
+
+        // --- Measures 5 to 8 (4/4 & 2/4 time) ---
+        // "Cho-hos na - sha slav-na Uk-ra - i - na"
+        ("E4", 2), ("G4", 2), ("B4", 3), ("A4", 1),
+        ("B4", 2), ("A4", 2), ("G4", 2), ("F#4", 2),
+        // "za - zhu-ri - la - sia."
+        ("G4", 3), ("F#4", 1), ("E4", 2), ("E4", 2),
+        ("E4", 3), ("-", 1), // Measure 8 (2/4 time): Quarter tied to eighth, then eighth rest
+
+        // --- Measures 9 to 12 (4/4 & 3/4 time) ---
+        // "A my tu - iu"
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+        // "cher-vo-nu ka-li-ny"
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+        // "pi-dii-me - mo,"
+        ("A4", 2), ("B4", 2), ("C5", 3), ("B4", 1), // C5 is dotted quarter
+        // "A my na - shu"
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+
+        // --- Measure 13 to 15: First Ending ---
+        // "slav-nu Uk-ra - i - nu,"
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+        // "hei, hei, roz - ve"
+        ("A4", 2), ("A4", 2), ("B4", 2), ("C5", 2),
+        // "se-li-mo!___"
+        ("B4", 1), ("A4", 1), ("G4", 2), ("F#4", 2), // Eighths + Quarters
+
+        // --- Second Pass (Repeated Refrain: Measures 9 to 13) ---
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+        ("A4", 2), ("B4", 2), ("C5", 3), ("B4", 1),
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+
+        // --- Measure 16 to 17: Second Ending ---
+        // "roz - ve - se-li - mo!"
+        ("B4", 2), ("A4", 2), ("G4", 2), ("F#4", 2),
+        ("E4", 6), ("-", 2) // Final tied resolve on E4 + quarter rest
+      ];
+
+      (string pitch, int eighths)[] kalynaBars2 =
+      [
+        // --- Measures 9 to 12 (4/4 & 3/4 time) ---
+        // "A my tu - iu"
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+        // "cher-vo-nu ka-li-ny"
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+        // "pi-dii-me - mo,"
+        ("A4", 2), ("B4", 2), ("C5", 3), ("B4", 1), // C5 is dotted quarter
+        // "A my na - shu"
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+      ];
+
+      (string pitch, int eighths)[] kalynaEnding1 =
+      [
+        // --- Measure 13 to 15: First Ending ---
+        // "slav-nu Uk-ra - i - nu,"
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+        // "hei, hei, roz - ve"
+        ("A4", 2), ("A4", 2), ("B4", 2), ("C5", 2),
+        // "se-li-mo!___"
+        ("B4", 1), ("A4", 1), ("G4", 2), ("F#4", 2), // Eighths + Quarters
+      ];
+
+      (string pitch, int eighths)[] kalynaEnding2 =
+      [
+        // --- Measure 16 to 17: Second Ending ---
+        // "roz - ve - se-li - mo!"
+        ("B4", 2), ("A4", 2), ("G4", 2), ("F#4", 2),
+        ("E4", 6), ("-", 2) // Final tied resolve on E4 + quarter rest
+      ];
+
+      (string pitch, int eighths)[] kalynaSecondPass =
+      [
+        // --- Second Pass (Repeated Refrain: Measures 9 to 13) ---
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+        ("A4", 2), ("B4", 2), ("C5", 3), ("B4", 1),
+        ("E4", 2), ("G4", 2), ("B4", 3), ("D#5", 1),
+        ("E5", 1), ("E5", 1), ("E5", 1), ("D5", 1), ("C5", 1), ("B4", 1),
+      ];
+
+      (string pitch, int eighths)[] compositeScore =
+      [
+        .. kalynaBars1mod, .. kalynaBars2, .. kalynaEnding1, .. kalynaEnding1,
+        .. kalynaEnding2, .. kalynaBars2, .. kalynaEnding1
+      ];
+
+      // (string pitch, int eighths)[] compositeScore =
+      // [
+      //   .. kalynaBars1mod
+      // ];
+
       int currentEighth = 0;
 
-      foreach (var (pitchToken, eighths) in score)
+      foreach (var (pitchToken, eighths) in compositeScore)
       {
         bool isRest = pitchToken == "-";
         int note = isRest ? -1 : ParsePitch(pitchToken);
@@ -335,18 +431,16 @@ static void KalynaMelody()
           if (noteOnResult != 0) break;
         }
 
-        // Step through the duration of the note in eighth-note increments
         for (int i = 0; i < eighths; i++)
         {
-          // Play a Kick drum exactly on every quarter-note beat (every 2 eighths)
+          // Bass drum on quarter-note downbeats
           if (currentEighth % 2 == 0)
           {
             PlayDrumHit(hMidi, 36, 85);
           }
-          // Play Hi-hat evenly on every eighth note
+          // Hi-hat on every eighth step
           PlayDrumHit(hMidi, 42, 50);
 
-          // Articulation logic: only cut off the note briefly at the VERY end of its duration
           if (i == eighths - 1)
           {
             int playMs = (int)(eighthMs * 0.85);
@@ -355,18 +449,13 @@ static void KalynaMelody()
             Thread.Sleep(playMs);
             if (!isRest)
             {
-              int noteOffResult = midiOutShortMsg(hMidi, MakeNoteOff(ch, note));
-              if (noteOffResult != 0)
-              {
-                Console.WriteLine($"Note off failed (note {note}). Error: {noteOffResult}");
-                return;
-              }
+              int noteOnResult = midiOutShortMsg(hMidi, MakeNoteOff(ch, note));
+              if (noteOnResult != 0) break;
             }
             Thread.Sleep(restMs);
           }
           else
           {
-            // If the note spans multiple eighths (e.g. half notes), hold it continuously
             Thread.Sleep(eighthMs);
           }
 
@@ -381,6 +470,72 @@ static void KalynaMelody()
         Console.WriteLine($"Could not close MIDI device. Error: {closeResult}");
     }
   }
+
+
+  public static void MagicSound()
+  {
+    int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
+    if (openResult != 0)
+    {
+      Console.WriteLine($"Could not open MIDI device. Error: {openResult}");
+      return;
+    }
+
+    const int channel = 1; // MIDI channel 2
+    string melody = "C6 E6 G6 C7 E7 G7";
+    var activeNotes = new List<int>();
+
+    try
+    {
+      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(channel, 98));
+      if (programResult != 0)
+      {
+        Console.WriteLine($"Magic sound program change failed. Error: {programResult}");
+        return;
+      }
+
+      foreach (string token in melody.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+      {
+        var note = ParsePitch(token);
+        int noteOnResult = midiOutShortMsg(hMidi, MakeNoteOn(channel, note, 100));
+        if (noteOnResult != 0)
+        {
+          Console.WriteLine($"Magic sound note-on failed (note {note}). Error: {noteOnResult}");
+          break;
+        }
+
+        activeNotes.Add(note);
+        Thread.Sleep(30);
+      }
+
+      // Thread.Sleep(200);
+      for (int step = 16; step >= 0; step--)
+      {
+        int value = step * 127 / 16;
+        int noteOnResult = midiOutShortMsg(hMidi, MakeControlChange(channel, 87, value));
+        if (noteOnResult != 0)
+        {
+          Console.WriteLine($"Magic sound note-on fail error: {noteOnResult}");
+          break;
+        }
+        Thread.Sleep(30);
+      }
+    }
+    finally
+    {
+      foreach (int note in activeNotes)
+      {
+        int noteOffResult = midiOutShortMsg(hMidi, MakeNoteOff(channel, note));
+        if (noteOffResult != 0)
+          Console.WriteLine($"Magic sound note-off failed (note {note}). Error: {noteOffResult}");
+      }
+
+      int closeResult = midiOutClose(hMidi);
+      if (closeResult != 0)
+        Console.WriteLine($"Could not close MIDI device. Error: {closeResult}");
+    }
+  }
+
 
 
   static int ParsePitch(string token)
@@ -452,4 +607,5 @@ static void KalynaMelody()
     if (noteOffResult != 0)
       Console.WriteLine($"Drum note-off failed (note {note}). Error: {noteOffResult}");
   }
+
 }
