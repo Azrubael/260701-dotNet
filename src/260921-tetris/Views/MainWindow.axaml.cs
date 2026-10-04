@@ -125,7 +125,7 @@ public partial class MainWindow : Window
     ScoreText.Text = $"Score: {_score,-5}";
     FallDelay = Math.Max(MinFallDelay, FallDelay - 4);
     _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
-    GameMusic.MagicSound();
+    _ = Task.Run(GameMusic.MagicSound);
   }
 
 

@@ -68,6 +68,15 @@ partial class GameMusic
     "G#5 - B5 - D6 - E6 - D6 C6 - B5 G#5 - C5 -"
   ];
 
+  readonly  string[] PassageBars3 =
+    [
+      "C5 - E5 G5 - A5 - C6 - D6 - C6 A5 - G5 -",
+      "A5 - G5 - E5 - C5 - D5 - E5 G5 - A5 - G5",
+      "G#5 - B5 - D6 - E6 - D6 C6 - B5 G#5 - C5 -",
+      "E5 - G#5 - B5 - D6 - C6 - B5 - G#5 - B5 -",
+      "A4 A4 A4 A4 - - - - - - - - - - - -",
+    ];
+
 
   public void PlayMusic(CancellationToken cancellationToken)
   {
@@ -82,7 +91,7 @@ partial class GameMusic
     {
       int channel = 0;
 
-      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(channel, 87));
+      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(channel, 88));
       if (programResult != 0)
       {
         Console.WriteLine($"Program change failed. Error: {programResult}");
@@ -94,7 +103,7 @@ partial class GameMusic
       string[] leadBars = [.. ThemeBars, .. PassageBars1,
                            .. ThemeBars, .. PassageBars2,
                            .. ThemeBars, .. PassageBars1,
-                           .. PassageBars2,  .. PassageBars1];
+                           .. PassageBars2,  .. PassageBars3];
 
       var melody = new List<(int note, int ms, int vel)>();
       foreach (string bar in leadBars)
@@ -161,7 +170,7 @@ partial class GameMusic
     }
 
     const int channel = 1; // MIDI channel 2
-    string melody = "C6 E6 G6 C7 E7 G7";
+    string melody = "G5 C6 E6 G6 C7 E7 G7";
     var activeNotes = new List<int>();
 
     try
@@ -197,7 +206,7 @@ partial class GameMusic
           Console.WriteLine($"Magic sound note-on fail error: {noteOnResult}");
           break;
         }
-        Thread.Sleep(30);
+        Thread.Sleep(40);
       }
     }
     finally

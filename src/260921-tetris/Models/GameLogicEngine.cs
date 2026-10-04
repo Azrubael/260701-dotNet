@@ -138,11 +138,14 @@ public class GameLogicEngine
 
   public void ClearCompleteLines()
   {
-    var linesToClear = collisionDetector.GetCompleteLines().ToList();
-
-    foreach (int row in linesToClear.OrderByDescending(r => r))
+    while (true)
     {
-      gameBoard.ClearLine(row);
+      var completeLines = collisionDetector.GetCompleteLines().ToList();
+      if (completeLines.Count == 0)
+        break;
+
+      // Clear the lowest full row, then recheck because rows may have shifted.
+      gameBoard.ClearLine(completeLines.Max());
     }
   }
 
