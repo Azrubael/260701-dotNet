@@ -66,10 +66,20 @@ partial class Program
       "G#5 - B5 - D6 - E6 - D6 C6 - B5 G#5 - C5 -"
     ];
 
+    string[] PassageBars3 =
+    [
+      "C5 - E5 G5 - A5 - C6 - D6 - C6 A5 - G5 -",
+      "A5 - G5 - E5 - C5 - D5 - E5 G5 - A5 - G5",
+      "G#5 - B5 - D6 - E6 - D6 C6 - B5 G#5 - C5 -",
+      "E5 - G#5 - B5 - D6 - C6 - B5 - G#5 - B5 -",
+      "A4 A4 A4 A4 - - - -",
+    ];
+
     string[] FirstThemeLeadBars = [.. FirstMelodyBars,
       .. PassageBars1, .. FirstMelodyBars,
       .. PassageBars2, .. FirstMelodyBars,
-      .. PassageBars1, .. PassageBars2];
+      .. PassageBars1, .. PassageBars3];
+    // string[] FirstThemeLeadBars = [.. PassageBars3];
 
     Console.WriteLine("""
         Select the melody to play:
@@ -120,7 +130,7 @@ partial class Program
     {
       int ch = 0;
 
-      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(ch, 87));
+      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(ch, 88));
       if (programResult != 0)
       {
         Console.WriteLine($"Program change failed. Error: {programResult}");
