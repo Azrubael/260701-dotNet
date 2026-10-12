@@ -86,6 +86,7 @@ partial class Program
         f - FirstMelody
         s - SecondMelody
         k - KalynaMelody
+        c - MagicClick
         m - MagicSound
         """);
     var selection = char.ToLowerInvariant(Console.ReadKey(intercept: true).KeyChar);
@@ -101,6 +102,9 @@ partial class Program
         break;
       case 'k':
         KalynaMelody();
+        break;
+      case 'c':
+        MagicClick();
         break;
       case 'm':
         MagicSound();
@@ -482,6 +486,50 @@ partial class Program
   }
 
 
+  public static void MagicClick()
+  {
+    int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
+    if (openResult != 0)
+    {
+      Console.WriteLine($"Could not open MIDI device. Error: {openResult}");
+      return;
+    }
+
+    const int percussionChannel = 9; // MIDI channel 10
+    const int note = 75;             // Claves
+
+    try
+    {
+      for (int i = 0; i < 3; i++)
+      {
+        int result = midiOutShortMsg(hMidi, MakeNoteOn(percussionChannel, note, 127));
+        if (result != 0)
+        {
+          Console.WriteLine($"Click note-on failed. Error: {result}");
+          break;
+        }
+
+        Thread.Sleep(50);
+
+        result = midiOutShortMsg(hMidi, MakeNoteOff(percussionChannel, note));
+        if (result != 0)
+        {
+          Console.WriteLine($"Click note-off failed. Error: {result}");
+          break;
+        }
+
+        Thread.Sleep(50);
+      }
+    }
+    finally
+    {
+      int closeResult = midiOutClose(hMidi);
+      if (closeResult != 0)
+        Console.WriteLine($"Could not close MIDI device. Error: {closeResult}");
+    }
+  }
+
+
   public static void MagicSound()
   {
     int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
@@ -497,7 +545,7 @@ partial class Program
 
     try
     {
-      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(channel, 98));
+      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(channel, 74));
       if (programResult != 0)
       {
         Console.WriteLine($"Magic sound program change failed. Error: {programResult}");

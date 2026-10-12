@@ -25,7 +25,7 @@ partial class GameMusic
   static int MakeProgramChange(int channel, int program)
       => 0xC0 | channel | (program << 8);
 
-  
+
   /// <summary>
   /// Makes the sount fade out with "value".
   /// </summary>
@@ -68,7 +68,7 @@ partial class GameMusic
     "G#5 - B5 - D6 - E6 - D6 C6 - B5 G#5 - C5 -"
   ];
 
-  readonly  string[] PassageBars3 =
+  readonly string[] PassageBars3 =
     [
       "C5 - E5 G5 - A5 - C6 - D6 - C6 A5 - G5 -",
       "A5 - G5 - E5 - C5 - D5 - E5 G5 - A5 - G5",
@@ -160,7 +160,7 @@ partial class GameMusic
   }
 
 
-    public static void MagicSound()
+  public static void MagicSound()
   {
     int openResult = midiOutOpen(out var hMidi, 0, 0, 0, 0);
     if (openResult != 0)
@@ -169,55 +169,34 @@ partial class GameMusic
       return;
     }
 
-    const int channel = 1; // MIDI channel 2
-    string melody = "G5 C6 E6 G6 C7 E7 G7";
-    var activeNotes = new List<int>();
+    const int percussionChannel = 9; // MIDI channel 10
+    const int note = 75;             // Claves
 
     try
     {
-      int programResult = midiOutShortMsg(hMidi, MakeProgramChange(channel, 98));
-      if (programResult != 0)
+      for (int i = 0; i < 3; i++)
       {
-        Console.WriteLine($"Magic sound program change failed. Error: {programResult}");
-        return;
-      }
-
-      foreach (string token in melody.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-      {
-        var note = ParsePitch(token);
-        int noteOnResult = midiOutShortMsg(hMidi, MakeNoteOn(channel, note, 100));
-        if (noteOnResult != 0)
+        int result = midiOutShortMsg(hMidi, MakeNoteOn(percussionChannel, note, 127));
+        if (result != 0)
         {
-          Console.WriteLine($"Magic sound note-on failed (note {note}). Error: {noteOnResult}");
+          Console.WriteLine($"Click note-on failed. Error: {result}");
           break;
         }
 
-        activeNotes.Add(note);
-        Thread.Sleep(30);
-      }
+        Thread.Sleep(50);
 
-      // Thread.Sleep(200);
-      for (int step = 16; step >= 0; step--)
-      {
-        int value = step * 127 / 16;
-        int noteOnResult = midiOutShortMsg(hMidi, MakeControlChange(channel, 87, value));
-        if (noteOnResult != 0)
+        result = midiOutShortMsg(hMidi, MakeNoteOff(percussionChannel, note));
+        if (result != 0)
         {
-          Console.WriteLine($"Magic sound note-on fail error: {noteOnResult}");
+          Console.WriteLine($"Click note-off failed. Error: {result}");
           break;
         }
-        Thread.Sleep(40);
+
+        Thread.Sleep(50);
       }
     }
     finally
     {
-      foreach (int note in activeNotes)
-      {
-        int noteOffResult = midiOutShortMsg(hMidi, MakeNoteOff(channel, note));
-        if (noteOffResult != 0)
-          Console.WriteLine($"Magic sound note-off failed (note {note}). Error: {noteOffResult}");
-      }
-
       int closeResult = midiOutClose(hMidi);
       if (closeResult != 0)
         Console.WriteLine($"Could not close MIDI device. Error: {closeResult}");

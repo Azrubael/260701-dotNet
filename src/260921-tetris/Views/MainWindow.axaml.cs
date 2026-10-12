@@ -22,6 +22,7 @@ public partial class MainWindow : Window
   private Window? _gameOverDialog;
   private bool _isPaused = false;
   private bool _isGameMusic = false;
+  private bool _isMagicSound = true;
   private CancellationTokenSource? _musicCts;
   private const int MaxFallDelay = 1000;
   private const int MinFallDelay = 90;
@@ -125,7 +126,8 @@ public partial class MainWindow : Window
     ScoreText.Text = $"Score: {_score,-5}";
     FallDelay = Math.Max(MinFallDelay, FallDelay - 4);
     _timer.Interval = TimeSpan.FromMilliseconds(FallDelay);
-    _ = Task.Run(GameMusic.MagicSound);
+
+    if (_isMagicSound) _ = Task.Run(GameMusic.MagicSound);
   }
 
 
@@ -237,6 +239,11 @@ public partial class MainWindow : Window
 
       case Key.M:
         ToggleMusic();
+        e.Handled = true;
+        return;
+
+      case Key.S:
+        _isMagicSound = false;
         e.Handled = true;
         return;
 
